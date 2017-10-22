@@ -1,0 +1,9 @@
+﻿{
+  "Configuration": {
+    "SampleOptions": {
+      "Value": "DefaultValue",
+      "SharedValue": "SharedValue",
+      "Value2" : "Value2"
+    }
+  }
+}

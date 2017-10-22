@@ -1,0 +1,8 @@
+﻿{
+  "${include}": "../common/sample_common.json",
+  "Configuration": {
+    "SampleOptions": {
+      "Value": "OverridenByProfile2"
+    }
+  }
+}

@@ -1,0 +1,156 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using MicroComponents.Bootstrap.Extensions.Configuration.Evaluation;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace MicroComponents.Bootstrap.Extensions.Configuration
+{
+    /// <summary>
+    /// Расширения для <see cref="Microsoft.Extensions.Configuration"/>.
+    /// </summary>
+    public static class ConfigurationReader
+    {
+        /// <summary>
+        /// Загрузка конфигурации.
+        /// </summary>
+        /// <param name="buildContext">Контекст построения приложения.</param>
+        /// <returns>Инициализированная конфигурация.</returns>
+        public static void LoadConfiguration(BuildContext buildContext)
+        {
+            var configuration = buildContext.StartupConfiguration;
+
+            // Настройка чтения конфигураций
+            IConfigurationBuilder builder = new ConfigurationBuilder();
+
+            // Добавляем начальное пользовательское конфигурирование.
+            if (configuration.BeginConfiguration != null)
+            {
+                builder = configuration.BeginConfiguration(builder);
+            }
+
+            // Добавляем стандартное конфигурирование из файловой директории.
+            var conf = AddFileConfiguration(builder, configuration);
+
+            // Параметры командной строки перекрывают все
+            builder = conf.Builder.AddCommandLine(configuration.CommandLineArgs?.Args ?? new string[0]);
+
+            // Добавляем конечное пользовательское конфигурирование.
+            if (configuration.EndConfiguration != null)
+            {
+                builder = configuration.EndConfiguration(builder);
+            }
+
+            // Построение конфигурации
+            var configurationRoot = builder.Build();
+
+            // Делаем копию ServiceCollection, чтобы не портить временной регистрацией.
+            IServiceCollection serviceCollectionCopy = buildContext.ServiceCollection.Copy();
+            serviceCollectionCopy.AddSingleton(configurationRoot);
+
+            var serviceProvider = serviceCollectionCopy.BuildServiceProvider();
+            var valueEvaluators = serviceProvider.GetServices<IValueEvaluator>();
+
+            // Добавляем свой ConfigurationSource
+            builder.Add(new PlaceholdersConfigurationSource(configurationRoot, valueEvaluators));
+
+            // Повторное построение, чтобы рассчитать вычисляемые значения
+            buildContext.ConfigurationRoot = builder.Build();
+            buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationBasePath", conf.ConfigurationBasePath));
+            buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationProfileDirectory", conf.ProfileDirectory));
+        }
+
+        /// <summary>
+        /// Добавление всех конфигурационных файлов в конфигурацию.
+        /// Файлы конфигурации определяются параметром <see cref="searchPatterns"/>
+        /// </summary>
+        /// <param name="builder">ConfigurationBuilder в который добавляются конфигурации.</param>
+        /// <param name="configurationPath">Директория для поиска файлов конфигурации.</param>
+        /// <param name="searchPatterns">Паттерны для поиска файлов.</param>
+        /// <returns>Итоговый ConfigurationBuilder.</returns>
+        public static IConfigurationBuilder AddConfigurationFiles(this IConfigurationBuilder builder, string configurationPath, string[] searchPatterns)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            foreach (var searchPattern in searchPatterns)
+            {
+                foreach (var file in Directory.EnumerateFiles(configurationPath, searchPattern, SearchOption.TopDirectoryOnly))
+                {
+                    var extension = Path.GetExtension(file)?.ToLower();
+                    if (extension == ".xml")
+                    {
+                        builder = builder.AddXmlFile(file, optional: false, reloadOnChange: true);
+                    }
+
+                    if (extension == ".json")
+                    {
+                        // Создадим провайдер Json и обернем его в свой декоратор.
+                        var jsonConfigurationSource = new JsonConfigurationSource { Path = file.PathNormalize(), Optional = false, ReloadOnChange = true };
+                        jsonConfigurationSource.ResolveFileProvider();
+                        builder.Add(new PreprocessConfigurationSource(jsonConfigurationSource, configurationPath.PathNormalize()));
+                    }
+                }
+            }
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Добавление всех конфигурационных файлов в конфигурацию.
+        /// В выборку попадают все xml и json файлы.
+        /// </summary>
+        /// <param name="builder">ConfigurationBuilder в который добавляются конфигурации.</param>
+        /// <param name="configurationPath">Директория для поиска файлов конфигурации.</param>
+        /// <returns>Итоговый ConfigurationBuilder.</returns>
+        public static IConfigurationBuilder AddConfigurationFiles(this IConfigurationBuilder builder, string configurationPath)
+        {
+            return builder.AddConfigurationFiles(configurationPath, new[] { "*.json", "*.xml" });
+        }
+
+        private static(IConfigurationBuilder Builder, string ConfigurationBasePath, string ProfileDirectory)
+        AddFileConfiguration(IConfigurationBuilder builder, StartupConfiguration configuration)
+        {
+            var configurationBasePath = string.Empty;
+            var profileDirectory = string.Empty;
+            if (configuration.ConfigurationPath != null)
+            {
+                // Базовый путь для чтения конфигураций
+                configurationBasePath = Path.IsPathRooted(configuration.ConfigurationPath)
+                    ? configuration.ConfigurationPath
+                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configuration.ConfigurationPath);
+
+                if (!Directory.Exists(configurationBasePath))
+                    throw new Exception($"ConfigurationBasePath ${configurationBasePath} doesn't exists");
+
+                // Добавляем файлы из корня конфигурации, переопределяем конфигурацию профильными конфигами
+                builder = builder.AddConfigurationFiles(configurationBasePath);
+
+                if (!string.IsNullOrEmpty(configuration.Profile))
+                {
+                    var dirs = configuration.Profile.PathNormalize().Split(Path.DirectorySeparatorChar, '.');
+
+                    var cumulativePath = configurationBasePath.PathNormalize();
+                    foreach (var dir in dirs)
+                    {
+                        // Путь к профильной конфигурации
+                        profileDirectory = Path.Combine(cumulativePath, dir);
+                        cumulativePath = profileDirectory;
+
+                        if (Directory.Exists(profileDirectory))
+                        {
+                            // Переопределяем конфигурацию профильными конфигами
+                            builder = builder.AddConfigurationFiles(profileDirectory);
+                        }
+                    }
+                }
+            }
+
+            return (builder, configurationBasePath, profileDirectory);
+        }
+    }
+}

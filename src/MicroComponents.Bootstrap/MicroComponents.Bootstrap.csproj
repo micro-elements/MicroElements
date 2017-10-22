@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>   
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <Authors>alexey.petriashev</Authors>
+    <Company>MicroComponents.net</Company>
+    <Description>MicroComponents bootstrap contains bootstrapper for .net services.</Description>
+    <PackageTags>microservices bootstrap</PackageTags>
+    <Version>1.0.2</Version>
+    <IncludeSymbols>true</IncludeSymbols>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netstandard2.0\MicroComponents.Bootstrap.xml</DocumentationFile>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="11.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Xml" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.0.0" />
+    <PackageReference Include="NLog.Extensions.Logging" Version="1.0.0-rtm-beta7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MicroComponents.DependencyInjection\MicroComponents.DependencyInjection.csproj" />
+    <ProjectReference Include="..\MicroComponents\MicroComponents.csproj" />
+  </ItemGroup>
+
+</Project>
