@@ -11,7 +11,7 @@
     <Authors>alexey.petriashev</Authors>
     <Description>MicroComponents is small components for fast start.</Description>
     <PackageTags>microservices</PackageTags>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
