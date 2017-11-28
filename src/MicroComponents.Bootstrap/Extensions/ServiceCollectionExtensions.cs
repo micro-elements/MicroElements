@@ -128,19 +128,33 @@ namespace MicroComponents.Bootstrap.Extensions
             return modules;
         }
 
-        public static IServiceCollection RegisterModules(this IServiceCollection services, IServiceCollection moduleServices, List<Type> moduleTypes)
+        public static IServiceCollection RegisterModules(this IServiceCollection services, List<Type> moduleTypes)
         {
             if (moduleTypes.Count > 0)
             {
+                // Copy of service collection
+                IServiceCollection moduleServices = services.Copy();
+
                 // Зарегистрируем в промежуточный контейнер
-                moduleTypes.ForEach(moduleType => moduleServices.RegisterType(moduleType).As<IModule>().Add());
+                //moduleTypes.ForEach(moduleType => moduleServices.RegisterType(moduleType).As<IModule>().Add());
+                moduleTypes.ForEach(moduleType => moduleServices.RegisterType(moduleType).AsSelf().Add());
 
                 // Получим модули с внедренными значениями
                 var moduleServiceProvider = moduleServices.BuildServiceProvider();
-                var modules = moduleServiceProvider.GetServices<IModule>().ToList();
 
-                // Добавим модули в основной билдер.
-                modules.ForEach(module => module.ConfigureServices(services));
+                foreach (var moduleType in moduleTypes)
+                {
+                    var module = moduleServiceProvider.GetService(moduleType) as IModule;
+
+                    //todo: можно сделать duck typing по наличию метода ConfigureServices
+                    module.ConfigureServices(services);
+                }
+
+                ////todo: можно сделать duck typing по наличию метода ConfigureServices
+                //var modules = moduleServiceProvider.GetServices<IModule>().ToList();
+
+                //// Добавим модули в основной билдер.
+                //modules.ForEach(module => module.ConfigureServices(services));
             }
 
             return services;
@@ -161,6 +175,7 @@ namespace MicroComponents.Bootstrap.Extensions
             {
                 serviceCollectionCopy.Add(serviceDescriptor);
             }
+
             return serviceCollectionCopy;
         }
     }

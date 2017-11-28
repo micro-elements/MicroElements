@@ -46,6 +46,12 @@ namespace MicroComponents.DependencyInjection
             return this;
         }
 
+        public RegistrationBuilder AsSelf()
+        {
+            _serviceTypes = new[] { _implementationType };
+            return this;
+        }
+
         public RegistrationBuilder SingleInstance()
         {
             _lifetime = ServiceLifetime.Singleton;

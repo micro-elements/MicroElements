@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MicroComponents.Bootstrap.Extensions;
@@ -6,7 +7,9 @@ using MicroComponents.Bootstrap.Extensions.Configuration;
 using MicroComponents.Bootstrap.Utils;
 using MicroComponents.Bootstrap.Extensions.Logging;
 using MicroComponents.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace MicroComponents.Bootstrap
@@ -25,13 +28,8 @@ namespace MicroComponents.Bootstrap
         /// <returns>Провайдер к коллекции зарегистрированных сервисов.</returns>
         public IServiceProvider BuildAndStart(StartupConfiguration startupConfiguration)
         {
-            var serviceProvider = Build(startupConfiguration);
-            return Start(serviceProvider);
-        }
-
-        public IServiceCollection Configure(StartupConfiguration startupConfiguration)
-        {
-            throw new NotImplementedException();
+            var buildContext = Build(startupConfiguration);
+            return Start(buildContext);
         }
 
         /// <summary>
@@ -39,7 +37,7 @@ namespace MicroComponents.Bootstrap
         /// </summary>
         /// <param name="startupConfiguration">Параметры запуска приложения.</param>
         /// <returns>Провайдер к коллекции зарегистрированных сервисов.</returns>
-        public IServiceProvider Build(StartupConfiguration startupConfiguration)
+        public IBuildContext Build(StartupConfiguration startupConfiguration)
         {
             _buildContext = new BuildContext { StartupConfiguration = startupConfiguration, };
             var measureSession = new MeasureSession("Конфигурирование служб");
@@ -47,12 +45,14 @@ namespace MicroComponents.Bootstrap
             // Разбор параметров командной строки
             startupConfiguration.BuildUpFromCommandLineArgs(startupConfiguration.CommandLineArgs.Args);
 
+            // Can use defined service collection or create new
             _buildContext.ServiceCollection = startupConfiguration.ServiceCollection ?? new ServiceCollection();
             var serviceCollection = _buildContext.ServiceCollection;
             
             using (measureSession.StartTimer("ConfigureLogging"))
             {
                 // Установка путей логирования, создание и блокирование pid-файла
+                // todo: UseCentralizedLogging
                 var unlocker = LoggingExtensions.SetupLogsPath(startupConfiguration);
                 serviceCollection.AddSingleton(unlocker);
 
@@ -87,67 +87,75 @@ namespace MicroComponents.Bootstrap
                 // Загрузка конфигурации
                 new LoadConfiguration().Execute(_buildContext);
 
+                //todo: проверить работоспособность.
+                serviceCollection.Replace(ServiceDescriptor.Singleton<IConfiguration>(_buildContext.ConfigurationRoot));
+
                 // Dump значений конфигурации в лог
                 if (startupConfiguration.DumpConfigurationToLog)
                 {
                     _buildContext.ConfigurationRoot.DumpConfigurationToLog(_buildContext.LoggerFactory);
                 }
-            };
+            }
 
-            IServiceProvider serviceProvider;
             using (measureSession.StartTimer("ConfigureServices"))
             {
                 try
                 {
                     // Конфигурирование сервисов
-                    serviceProvider = ConfigureServices(_buildContext);     
+                    ConfigureServices(_buildContext);
+
+                    // Строим провайдер.
+                    _buildContext.ServiceProvider = _buildContext.ServiceCollection.BuildServiceProvider();
+
+
+                    if (startupConfiguration.ExternalBuilder != null)
+                    {
+                        _buildContext.ServiceProvider = ConfigureServicesExt(_buildContext);
+                    }
                 }
                 catch (Exception exception)
                 {
+                    //todo: right logging
                     _buildContext.Logger.LogError(new EventId(0), exception, exception.Message);
                     throw;
                 }
             }
 
-            var externalBuilder = startupConfiguration.ExternalBuilder;
-            if (externalBuilder != null)
-            {
-                serviceProvider = ConfigureServicesExt(_buildContext);
-            }
+
 
             measureSession.LogMeasures(_buildContext.Logger);
 
-            return serviceProvider;
+            return _buildContext;
         }
 
         /// <summary>
         /// Запускаем приложение.
         /// </summary>
-        /// <param name="serviceProvider">Провайдер сервисов.</param>
+        /// <param name="buildContext">Провайдер сервисов.</param>
         /// <returns>Провайдер к коллекции зарегистрированных сервисов.</returns>
-        public IServiceProvider Start(IServiceProvider serviceProvider)
+        public IBuildContext Start(IBuildContext buildContext)
         {
             _buildContext.Logger.LogInformation("Запуск служб");
             var measureSession = new MeasureSession("Запуск служб");
             measureSession.ExecuteWithTimer("StartRunnables", () =>
             {
                 // Запуск сервисов.
-                serviceProvider.StartRunnablesAsync(_buildContext.Logger).Wait();
+                buildContext.ServiceProvider.StartRunnablesAsync(_buildContext.Logger).Wait();
             });
 
             measureSession.LogMeasures(_buildContext.Logger);
 
-            return serviceProvider;
+            return buildContext;
         }
 
         /// <summary>
         /// Конфигурирование сервисов.
         /// </summary>
         /// <param name="buildContext">Контекст построения приложения.</param>
-        /// <returns>Сконфигурированный <see cref="IServiceProvider"/></returns>
-        public IServiceProvider ConfigureServices(BuildContext buildContext)
+        public void ConfigureServices(BuildContext buildContext)
         {
-            buildContext.Logger.LogInformation("ConfigureServices started");
+            var logger = buildContext.Logger;
+            logger.LogInformation("ConfigureServices started");
 
             StartupConfiguration startupConfiguration = buildContext.StartupConfiguration;
             ILoggerFactory loggerFactory = buildContext.LoggerFactory;
@@ -163,29 +171,34 @@ namespace MicroComponents.Bootstrap
             // Регистрируем типы по атрибуту [Register]
             services.RegisterWithRegisterAttribute(buildContext.ExportedTypes);
 
-            // Регистрируем модули.
-            var moduleTypes = buildContext.ExportedTypes.GetClassTypesAssignableTo<IModule>().ToList();
-            if (moduleTypes.Count > 0)
+
+            var modulesOptions = startupConfiguration.Modules;
+            startupConfiguration.ConfigureModules(modulesOptions);
+
+            // Регистрируем модули.           
+            List<Type> moduleTypes = new List<Type>();
+            if(modulesOptions.AutoDiscoverModules)
             {
-                // Временный контейнер с внедренной конфигурацией и логированием.
-                IServiceCollection moduleServices = new ServiceCollection()
-                    .RegisterLogging(loggerFactory)
-                    .RegisterConfigurationTypes(configurationRoot, buildContext.ExportedTypes, startupConfiguration.Profile)
-                    .RegisterWithRegisterAttribute(buildContext.ExportedTypes);
+                moduleTypes = buildContext.ExportedTypes.GetClassTypesAssignableTo<IModule>().ToList();
 
-                // Создаем экземпляры модулей.
-                var modules = moduleServices.ResolveModules(moduleTypes);
-
-                // Модули регистрируют свои сервисы.
-                modules.ForEach(module => module.ConfigureServices(services));
+                logger.LogInformation($"Found {moduleTypes.Count} modules:");
+                foreach (var moduleType in moduleTypes)
+                    logger.LogInformation($"Autodiscovered module: {moduleType.Name}");
             }
 
-            // Строим провайдер.
-            var serviceProvider = services.BuildServiceProvider();
+            var userDefinedModules = modulesOptions.ModuleTypes;
+            if (userDefinedModules.Length > 0)
+            {
+                logger.LogInformation("UserDefinedModules modules:");
+                foreach (var moduleType in userDefinedModules)
+                    logger.LogInformation($"UserDefined module: {moduleType.Name}");
+                moduleTypes.AddRange(userDefinedModules); 
+            }
 
-            buildContext.Logger.LogInformation("ConfigureServices finished");
+            if(modulesOptions.AutoRegisterModules)
+                services.RegisterModules(moduleTypes);
 
-            return serviceProvider;
+            logger.LogInformation("ConfigureServices finished");
         }
 
         /// <summary>
@@ -202,7 +215,7 @@ namespace MicroComponents.Bootstrap
             // Регистрируем сервисы, переданные снаружи.
             builder.AddServices(buildContext.ServiceCollection);
 
-            // Запускаем конфигурацию.
+            // Запускаем конфигурирование.
             var serviceProvider = builder.ConfigureServices(buildContext);
 
             buildContext.Logger.LogInformation("ConfigureServicesExt finished");

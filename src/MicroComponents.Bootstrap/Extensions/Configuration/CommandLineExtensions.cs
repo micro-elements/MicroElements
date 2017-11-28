@@ -1,5 +1,5 @@
 ﻿using System;
-using JetBrains.Annotations;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 
 namespace MicroComponents.Bootstrap.Extensions.Configuration
@@ -12,7 +12,7 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
         /// <param name="targetObject">Target.</param>
         /// <param name="args">Command Line Args.</param>
         /// <returns>Corrected object.</returns>
-        public static void BuildUpFromCommandLineArgs<T>([NotNull] this T targetObject, string[] args)
+        public static void BuildUpFromCommandLineArgs<T>(this T targetObject, string[] args)
         {
             if (targetObject == null)
                 throw new ArgumentNullException(nameof(targetObject));
@@ -25,6 +25,16 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
 
                 configuration.Bind(targetObject);
             }
+        }
+
+        /// <summary>
+        /// Получение параметров командной строки.
+        /// </summary>
+        /// <returns>Параметры командной строки или пустой массив.</returns>
+        public static string[] GetCommandLine()
+        {
+            var commandLineArgs = Environment.GetCommandLineArgs();         
+            return commandLineArgs.Length > 1 ? commandLineArgs.Skip(1).ToArray() : Array.Empty<string>();
         }
     }
 }

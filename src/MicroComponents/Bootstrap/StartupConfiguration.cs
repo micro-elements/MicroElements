@@ -6,10 +6,6 @@ using Microsoft.Extensions.Logging;
 
 namespace MicroComponents.Bootstrap
 {
-    public interface IStartupConfiguration
-    {
-    }
-
     /// <summary>
     /// Параметры запуска приложения.
     /// </summary>
@@ -18,7 +14,7 @@ namespace MicroComponents.Bootstrap
         /// <summary>
         /// Параметры командной строки.
         /// </summary>
-        public CommandLineArgs CommandLineArgs = CommandLineArgs.Null;
+        public CommandLineArgs CommandLineArgs { get; set; } = CommandLineArgs.Null;
 
         /// <summary>
         /// Путь к папке с конфигурациями (абсолютный или относительный).
@@ -27,7 +23,8 @@ namespace MicroComponents.Bootstrap
         public string ConfigurationPath { get; set; }
 
         /// <summary>
-        /// Профиль конфигурации.
+        /// Configuration profile.
+        /// Can be hierarchical. For example: 'Profile/SubProfile'
         /// </summary>
         public string Profile { get; set; }
 
@@ -53,6 +50,9 @@ namespace MicroComponents.Bootstrap
         /// </summary>
         public bool DumpConfigurationToLog { get; set; } = true;
 
+        public Action<ModulesOptions> ConfigureModules = options => { };
+        public ModulesOptions Modules { get; set; } = new ModulesOptions();
+
         #region Dynamic
 
         /// <summary>
@@ -62,6 +62,8 @@ namespace MicroComponents.Bootstrap
 
 
         public IExternalBuilder ExternalBuilder { get; set; }
+
+        public IConfigurationBuilder ConfigurationBuilder { get; set; }
 
         /// <summary>
         /// Действие, позволяющее добавить свою логику конфигурации в начало конфигурирования конфигурации.
@@ -73,11 +75,22 @@ namespace MicroComponents.Bootstrap
         /// </summary>
         public Func<IConfigurationBuilder, IConfigurationBuilder> EndConfiguration { get; set; }
 
+
+
         /// <summary>
         /// Получение сконфигурированой фабрики логирования. Если не задано, то конфигурируется по умолчанию.
         /// </summary>
         public Func<ILoggerFactory> ConfigureLogging { get; set; }
 
+
+
         #endregion
+    }
+
+    public class ModulesOptions
+    {
+        public bool AutoDiscoverModules { get; set; } = false;
+        public bool AutoRegisterModules { get; set; } = true;
+        public Type[] ModuleTypes { get; set; } = new Type[0];
     }
 }

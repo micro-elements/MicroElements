@@ -20,27 +20,27 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
         /// <returns>Инициализированная конфигурация.</returns>
         public static void LoadConfiguration(BuildContext buildContext)
         {
-            var configuration = buildContext.StartupConfiguration;
+            var startupConfiguration = buildContext.StartupConfiguration;
 
             // Настройка чтения конфигураций
-            IConfigurationBuilder builder = new ConfigurationBuilder();
+            IConfigurationBuilder builder = buildContext.StartupConfiguration.ConfigurationBuilder ?? new ConfigurationBuilder();
 
             // Добавляем начальное пользовательское конфигурирование.
-            if (configuration.BeginConfiguration != null)
+            if (startupConfiguration.BeginConfiguration != null)
             {
-                builder = configuration.BeginConfiguration(builder);
+                builder = startupConfiguration.BeginConfiguration(builder);
             }
 
             // Добавляем стандартное конфигурирование из файловой директории.
-            var conf = AddFileConfiguration(builder, configuration);
+            AddFileConfiguration(buildContext, builder);
 
             // Параметры командной строки перекрывают все
-            builder = conf.Builder.AddCommandLine(configuration.CommandLineArgs?.Args ?? new string[0]);
+            builder = builder.AddCommandLine(startupConfiguration.CommandLineArgs?.Args ?? new string[0]);
 
             // Добавляем конечное пользовательское конфигурирование.
-            if (configuration.EndConfiguration != null)
+            if (startupConfiguration.EndConfiguration != null)
             {
-                builder = configuration.EndConfiguration(builder);
+                builder = startupConfiguration.EndConfiguration(builder);
             }
 
             // Построение конфигурации
@@ -58,8 +58,6 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
 
             // Повторное построение, чтобы рассчитать вычисляемые значения
             buildContext.ConfigurationRoot = builder.Build();
-            buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationBasePath", conf.ConfigurationBasePath));
-            buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationProfileDirectory", conf.ProfileDirectory));
         }
 
         /// <summary>
@@ -112,45 +110,50 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
             return builder.AddConfigurationFiles(configurationPath, new[] { "*.json", "*.xml" });
         }
 
-        private static(IConfigurationBuilder Builder, string ConfigurationBasePath, string ProfileDirectory)
-        AddFileConfiguration(IConfigurationBuilder builder, StartupConfiguration configuration)
+        private static IConfigurationBuilder AddFileConfiguration(BuildContext buildContext, IConfigurationBuilder builder)
         {
-            var configurationBasePath = string.Empty;
-            var profileDirectory = string.Empty;
-            if (configuration.ConfigurationPath != null)
+            var startupConfiguration = buildContext.StartupConfiguration;
+
+            if (startupConfiguration.ConfigurationPath != null)
             {
                 // Базовый путь для чтения конфигураций
-                configurationBasePath = Path.IsPathRooted(configuration.ConfigurationPath)
-                    ? configuration.ConfigurationPath
-                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configuration.ConfigurationPath);
+                var configurationBasePath = Path.IsPathRooted(startupConfiguration.ConfigurationPath)
+                    ? startupConfiguration.ConfigurationPath
+                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, startupConfiguration.ConfigurationPath);
 
                 if (!Directory.Exists(configurationBasePath))
                     throw new Exception($"ConfigurationBasePath ${configurationBasePath} doesn't exists");
 
+                buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationBasePath", configurationBasePath));
+
                 // Добавляем файлы из корня конфигурации, переопределяем конфигурацию профильными конфигами
                 builder = builder.AddConfigurationFiles(configurationBasePath);
 
-                if (!string.IsNullOrEmpty(configuration.Profile))
+                if (!string.IsNullOrEmpty(startupConfiguration.Profile))
                 {
-                    var dirs = configuration.Profile.PathNormalize().Split(Path.DirectorySeparatorChar, '.');
+                    var dirs = startupConfiguration.Profile.PathNormalize().Split(Path.DirectorySeparatorChar, '.');
 
                     var cumulativePath = configurationBasePath.PathNormalize();
+                    string profileDirectory = "";
                     foreach (var dir in dirs)
                     {
                         // Путь к профильной конфигурации
-                        profileDirectory = Path.Combine(cumulativePath, dir);
-                        cumulativePath = profileDirectory;
+                        var subProfileDirectory = Path.Combine(cumulativePath, dir);
+                        cumulativePath = subProfileDirectory;
 
-                        if (Directory.Exists(profileDirectory))
+                        if (Directory.Exists(subProfileDirectory))
                         {
+                            profileDirectory = subProfileDirectory;
+                            
                             // Переопределяем конфигурацию профильными конфигами
-                            builder = builder.AddConfigurationFiles(profileDirectory);
+                            builder = builder.AddConfigurationFiles(subProfileDirectory);
                         }
                     }
+
+                    buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationProfileDirectory", profileDirectory));
                 }
             }
-
-            return (builder, configurationBasePath, profileDirectory);
+            return builder;
         }
     }
 }

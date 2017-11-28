@@ -17,4 +17,19 @@ namespace MicroComponents.Bootstrap
             return loggerFactory;
         }
     }
+
+    public class DefaultLogging
+    {
+        /// <summary>
+        /// Конфигурирование логирования.
+        /// </summary>
+        /// <returns>Сконфигурированная фабрика логирования.</returns>
+        public static ILoggerFactory ConfigureLogging()
+        {
+            var loggerFactory = new LoggerFactory();
+                //.AddConsole();
+
+            return loggerFactory;
+        }
+    }
 }

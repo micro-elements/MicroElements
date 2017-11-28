@@ -24,9 +24,14 @@ namespace MicroComponents.Bootstrap
         public IServiceCollection ServiceCollection { get; set; }
 
         /// <summary>
+        /// Service provider builded on the end of build process.
+        /// </summary>
+        public IServiceProvider ServiceProvider { get; set; }
+
+        /// <summary>
         /// Root of loaded configuration.
         /// </summary>
-        public IConfigurationRoot ConfigurationRoot;
+        public IConfigurationRoot ConfigurationRoot { get; set; }
 
         /// <summary>
         /// Фабрика логирования.
@@ -57,6 +62,12 @@ namespace MicroComponents.Bootstrap
         /// Usefull information collected on build process. This information can be logged after build process finished.
         /// </summary>
         public List<KeyValuePair<string,string>> BuildInfo = new List<KeyValuePair<string, string>>();
+
+        /// <inheritdoc />
+        public object GetService(Type serviceType)
+        {
+            return ServiceProvider.GetService(serviceType);
+        }
 
         /// <summary>
         /// Вывод в лог заголовочной информации.
