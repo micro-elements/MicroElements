@@ -24,6 +24,9 @@
     <None Update="TestsConfiguration\Bootstrap\common\sample_common.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="TestsConfiguration\Bootstrap\placeholders\placeholders.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="TestsConfiguration\Bootstrap\profile1\sample.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -31,6 +34,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="TestsConfiguration\Bootstrap\profile1\sub_profile2\sample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="TestsConfiguration\Bootstrap\placeholders\sample.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="TestsConfiguration\Bootstrap\profile2\sample.json">

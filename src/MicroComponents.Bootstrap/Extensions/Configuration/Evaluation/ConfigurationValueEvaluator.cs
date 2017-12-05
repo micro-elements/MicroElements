@@ -25,7 +25,9 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration.Evaluation
         /// <inheritdoc />
         public bool TryEvaluate(string expression, out string value)
         {
-            value = _configurationRoot.GetValue<string>(expression);
+            // Часто используют '.' вместо ':', поэтому автоматом исправим
+            var configurationKey = expression.Replace('.', ':');
+            value = _configurationRoot.GetValue<string>(configurationKey);
             return value != null;
         }
     }

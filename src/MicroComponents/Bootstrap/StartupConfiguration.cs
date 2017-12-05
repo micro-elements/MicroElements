@@ -89,8 +89,14 @@ namespace MicroComponents.Bootstrap
 
     public class ModulesOptions
     {
+        /// <summary>
+        /// Автоматический поиск модулей среди загруженных типов.
+        /// </summary>
         public bool AutoDiscoverModules { get; set; } = false;
-        public bool AutoRegisterModules { get; set; } = true;
+
+        /// <summary>
+        /// Типы модулей, заданные вручную.
+        /// </summary>
         public Type[] ModuleTypes { get; set; } = new Type[0];
     }
 }

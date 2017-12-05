@@ -87,8 +87,9 @@ namespace MicroComponents.Bootstrap
                 // Загрузка конфигурации
                 new LoadConfiguration().Execute(_buildContext);
 
-                //todo: проверить работоспособность.
+                // Регистрируем конфигурацию в виде IConfiguration и IConfigurationRoot
                 serviceCollection.Replace(ServiceDescriptor.Singleton<IConfiguration>(_buildContext.ConfigurationRoot));
+                serviceCollection.Replace(ServiceDescriptor.Singleton<IConfigurationRoot>(_buildContext.ConfigurationRoot));
 
                 // Dump значений конфигурации в лог
                 if (startupConfiguration.DumpConfigurationToLog)
@@ -195,7 +196,7 @@ namespace MicroComponents.Bootstrap
                 moduleTypes.AddRange(userDefinedModules); 
             }
 
-            if(modulesOptions.AutoRegisterModules)
+            if(moduleTypes.Count > 0)
                 services.RegisterModules(moduleTypes);
 
             logger.LogInformation("ConfigureServices finished");

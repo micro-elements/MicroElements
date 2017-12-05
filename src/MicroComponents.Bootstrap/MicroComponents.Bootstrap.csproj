@@ -10,7 +10,7 @@
     <Company>MicroComponents.net</Company>
     <Description>MicroComponents bootstrap contains bootstrapper for .net services.</Description>
     <PackageTags>microservices bootstrap</PackageTags>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
   

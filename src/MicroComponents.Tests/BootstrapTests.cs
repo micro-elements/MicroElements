@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using FluentAssertions;
 using MicroComponents.Bootstrap;
 using MicroComponents.Configuration;
@@ -215,7 +216,7 @@ namespace MicroComponents.Tests
             testModule2Service.ConfigurationValue.Should().Be("Test");
         }
 
-        [Test(Description = "Читаем конфигурацию без профиля")]
+        [Test]
         public void ServiceCollection_IConfiguration_should_be_registered()
         {
             var serviceCollection = new ServiceCollection();
@@ -234,6 +235,73 @@ namespace MicroComponents.Tests
 
             var configuration = serviceProvider.GetService<IConfiguration>();
             configuration.Should().NotBeNull();
+
+            var configurationRoot = serviceProvider.GetService<IConfigurationRoot>();
+            configurationRoot.Should().NotBeNull();
+        }
+
+        [Test]
+        public void placeholders_should_be_replaced_from_file()
+        {
+            var serviceCollection = new ServiceCollection();
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Bootstrap",
+                Profile = "placeholders",
+                ServiceCollection = serviceCollection
+            };
+            new ApplicationBuilder().Build(startupOptions);
+
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+
+            var sampleOptions = serviceProvider.GetService<SampleOptions>();
+            sampleOptions.Should().NotBeNull();
+            sampleOptions.Value.Should().Be("ValueFromPlaceholder");         
+        }
+
+        [Test]
+        public void placeholders_should_be_replaced_from_command_line()
+        {
+            var startupOptions = new StartupConfiguration
+            {
+                BeginConfiguration = builder => builder.AddInMemoryCollection(new[]
+                {
+                    new KeyValuePair<string, string>("Configuration:Property", "Value"),
+                    new KeyValuePair<string, string>("Configuration:PropertyWithPlaceholder", "${configurationValue:Placeholders:Value}"),
+                }),
+                CommandLineArgs = new CommandLineArgs(new[] { "--Placeholders:Value", "ValueFromPlaceholder" }),
+            };
+            var serviceProvider = new ApplicationBuilder().Build(startupOptions).ServiceProvider;
+
+            var configuration = serviceProvider.GetService<IConfiguration>();
+            configuration.Should().NotBeNull();
+            configuration["Configuration:Property"].Should().Be("Value");
+            configuration["Configuration:PropertyWithPlaceholder"].Should().Be("ValueFromPlaceholder");
+        }
+
+        [Test]
+        [TestCase("${configurationValue:Placeholders:Value}", "ValueFromPlaceholder", TestName = "simple_placeholder")]
+        [TestCase("${configurationValue:Placeholders.Value}", "ValueFromPlaceholder", TestName = "simple_placeholder_with_dot")]
+        [TestCase("${configurationValue:Placeholders:Value} end", "ValueFromPlaceholder end", TestName = "placeholder_in_start_of_text")]
+        [TestCase("Some text ${configurationValue:Placeholders:Value}", "Some text ValueFromPlaceholder", TestName = "placeholder_in_end_of_text")]
+        [TestCase("Some text ${configurationValue:Placeholders:Value} end", "Some text ValueFromPlaceholder end", TestName = "placeholder_in_middle_of_text")]
+        [TestCase("${configurationValue:Placeholders:Value} ${configurationValue:Placeholders:Value2}", "ValueFromPlaceholder ValueFromPlaceholder2", TestName = "several_placeholders")]
+        public void placeholders_should_be_replaced(string valueWithPlaceholder, string resultValue)
+        {
+            var startupOptions = new StartupConfiguration
+            {
+                BeginConfiguration = builder => builder.AddInMemoryCollection(new[]
+                {
+                    new KeyValuePair<string, string>("Configuration:Property", "Value"),
+                    new KeyValuePair<string, string>("Configuration:PropertyWithPlaceholder", valueWithPlaceholder),
+                }),
+                CommandLineArgs = new CommandLineArgs(new[] { "--Placeholders:Value", "ValueFromPlaceholder", "--Placeholders:Value2", "ValueFromPlaceholder2" }),
+            };
+            var serviceProvider = new ApplicationBuilder().Build(startupOptions).ServiceProvider;
+
+            var configuration = serviceProvider.GetService<IConfiguration>();
+            configuration.Should().NotBeNull();
+            configuration["Configuration:PropertyWithPlaceholder"].Should().Be(resultValue);
         }
     }
 

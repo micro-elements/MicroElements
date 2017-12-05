@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
@@ -38,32 +39,50 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration.Evaluation
         /// <inheritdoc />
         public override bool TryGet(string key, out string value)
         {
-            _propertiesWithPlaceholders.TryGetValue(key, out string placeholder);
-            if (placeholder != null)
+            value = null;
+            _propertiesWithPlaceholders.TryGetValue(key, out string valueWithPlaceholderOriginal);
+            if (valueWithPlaceholderOriginal != null)
             {
-                foreach (var evaluator in _evaluators)
+                var valueWithPlaceholder = valueWithPlaceholderOriginal;
+                int placeholderValueEndIndex = 0;
+                while (placeholderValueEndIndex >= 0 && valueWithPlaceholder.Contains("${") && valueWithPlaceholder.Contains("}"))
                 {
-                    var evaluatorName = evaluator.Name;
-                    var placeholderTag = $"${{{evaluatorName}:";
-                    if (placeholder.StartsWith(placeholderTag))//todo: не только начало!
+                    foreach (var evaluator in _evaluators)
                     {
-                        string expressionValue = placeholder.Substring(placeholderTag.Length, placeholder.Length - placeholderTag.Length - 1);
-                        if (evaluator.TryEvaluate(expressionValue, out string evaluatedValue))
+                        var evaluatorName = evaluator.Name;
+                        var placeholderTag = $"${{{evaluatorName}:";
+                        if (valueWithPlaceholder.Contains(placeholderTag))
                         {
-                            value = evaluatedValue;
-                            return true;
+                            int tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, StringComparison.InvariantCultureIgnoreCase);
+                            placeholderValueEndIndex = valueWithPlaceholder.IndexOf('}', tagIndex);
+                            if (placeholderValueEndIndex > 0)
+                            {
+                                var placeholderValueStartIndex = tagIndex + placeholderTag.Length;
+                                string expressionValue = valueWithPlaceholder.Substring(placeholderValueStartIndex, placeholderValueEndIndex - placeholderValueStartIndex);
+                                if (evaluator.TryEvaluate(expressionValue, out string evaluatedValue))
+                                {
+                                    if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
+                                    {
+                                        value = evaluatedValue;
+                                        return true;
+                                    }
+                                    var placeholder = valueWithPlaceholder.Substring(tagIndex, placeholderValueEndIndex - tagIndex + 1);
+                                    value = valueWithPlaceholder.Replace(placeholder, evaluatedValue);
+                                    valueWithPlaceholder = value;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            value = null;
-            return false;
+            return value != null;
         }
 
         private static bool HasPlaceholder(string value, object tag)
         {
-            return value.StartsWith($"${{{tag}:");
+            return value.Contains($"${{{tag}:");
         }
 
         private static bool HasPlaceholder(string value, IEnumerable<object> tags)
