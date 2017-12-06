@@ -44,9 +44,11 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration.Evaluation
             if (valueWithPlaceholderOriginal != null)
             {
                 var valueWithPlaceholder = valueWithPlaceholderOriginal;
+                string valueWithPlaceholderPrev = null;
                 int placeholderValueEndIndex = 0;
-                while (placeholderValueEndIndex >= 0 && valueWithPlaceholder.Contains("${") && valueWithPlaceholder.Contains("}"))
+                while (placeholderValueEndIndex >= 0 && valueWithPlaceholderPrev != valueWithPlaceholder)
                 {
+                    valueWithPlaceholderPrev = valueWithPlaceholder;
                     foreach (var evaluator in _evaluators)
                     {
                         var evaluatorName = evaluator.Name;
