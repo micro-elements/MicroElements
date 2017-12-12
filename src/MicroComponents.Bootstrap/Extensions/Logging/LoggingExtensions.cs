@@ -12,36 +12,38 @@ namespace MicroComponents.Bootstrap.Extensions.Logging
         /// <returns>Экземпляр менеджера pid-файлов. Он необходим для удаления файла при завершении работы.</returns>
         public static IStoppable SetupLogsPath(StartupConfiguration configuration)
         {
-            var logsPath = Path.IsPathRooted(configuration.LogsPath)
+            var fullLogsPath = Path.IsPathRooted(configuration.LogsPath)
                 ? configuration.LogsPath
-                : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+                : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configuration.LogsPath);
 
-            if (!Directory.Exists(logsPath))
-                Directory.CreateDirectory(logsPath);
+            if (!Directory.Exists(fullLogsPath))
+                Directory.CreateDirectory(fullLogsPath);
 
-            var pidFileManager = new PidFileManager(logsPath, configuration.Profile);
+            var lockFileManager = new LockFileManager(fullLogsPath, configuration.Profile);
             if (configuration.InstanceId != null)
             {
-                if (pidFileManager.CheckInstanceId(configuration.InstanceId))
+                if (lockFileManager.CheckInstanceId(configuration.InstanceId))
                 {
-                    pidFileManager.CreateAndLockPidFile(configuration.InstanceId);
+                    lockFileManager.CreateAndLockPidFile(configuration.InstanceId);
                 }
                 else
                 {
-                    throw new Exception($"Приложение с InstanceId = {configuration.InstanceId} уже запущено!");//todo: почему-то не хочет кидать ConfigurationErrorsException
+                    throw new Exception($"Приложение с InstanceId = {configuration.InstanceId} уже запущено!");
                 }
             }
             else
             {
-                pidFileManager.CreateAndLockPidFile();
+                lockFileManager.CreateAndLockPidFile();
             }
 
-            var optionsProfile = configuration.Profile;
-            Environment.SetEnvironmentVariable("LogsPath", logsPath, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("ProfileName", optionsProfile?.CleanFileName().Replace(Path.DirectorySeparatorChar, '_'), EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("CurrentInstanceId", pidFileManager.CurrentInstanceId, EnvironmentVariableTarget.Process);
+            var flatProfileName = configuration.Profile?.CleanFileName().Replace(Path.DirectorySeparatorChar, '_');
+            // todo: задокументировать
+            // todo: использовать для автоматической конфигурации общего сбора логов
+            Environment.SetEnvironmentVariable("LogsPath", fullLogsPath, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("ProfileName", flatProfileName, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("CurrentInstanceId", configuration.InstanceId, EnvironmentVariableTarget.Process);
 
-            return pidFileManager;
+            return lockFileManager;
         }
     }
 }

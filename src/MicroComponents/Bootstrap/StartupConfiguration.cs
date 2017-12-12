@@ -29,9 +29,11 @@ namespace MicroComponents.Bootstrap
         public string Profile { get; set; }
 
         /// <summary>
-        /// Путь к папке логов.
+        /// The path for logs. Can be relative or absolute. 
+        /// <p>Default value is 'logs'.</p>
+        /// <p>Evaluated value is set to Environment Variables.</p>
         /// </summary>
-        public string LogsPath { get; set; }
+        public string LogsPath { get; set; } = Constants.DefaultLogsPath;
 
         /// <summary>
         /// Идентификатор запущенного приложения.
@@ -43,7 +45,7 @@ namespace MicroComponents.Bootstrap
         /// <para>Use something like "YourApp.*.dll"</para>
         /// <para>Default: { "*.dll", "*.exe" }</para>
         /// </summary>
-        public string[] AssemblyScanPatterns { get; set; } = { "*.dll", "*.exe" };
+        public string[] AssemblyScanPatterns { get; set; } = Constants.DefaultAssemblyScanPatterns;
 
         /// <summary>
         /// If <c>true</c> dumps all configuration values to Logger.
@@ -75,14 +77,10 @@ namespace MicroComponents.Bootstrap
         /// </summary>
         public Func<IConfigurationBuilder, IConfigurationBuilder> EndConfiguration { get; set; }
 
-
-
         /// <summary>
         /// Получение сконфигурированой фабрики логирования. Если не задано, то конфигурируется по умолчанию.
         /// </summary>
         public Func<ILoggerFactory> ConfigureLogging { get; set; }
-
-
 
         #endregion
     }

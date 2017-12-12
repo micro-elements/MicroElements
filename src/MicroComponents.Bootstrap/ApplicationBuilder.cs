@@ -48,7 +48,7 @@ namespace MicroComponents.Bootstrap
             // Can use defined service collection or create new
             _buildContext.ServiceCollection = startupConfiguration.ServiceCollection ?? new ServiceCollection();
             var serviceCollection = _buildContext.ServiceCollection;
-            
+
             using (measureSession.StartTimer("ConfigureLogging"))
             {
                 // Установка путей логирования, создание и блокирование pid-файла
@@ -57,6 +57,7 @@ namespace MicroComponents.Bootstrap
                 serviceCollection.AddSingleton(unlocker);
 
                 // Получение сконфигурированной фабрики логирования.
+                // todo: убрать зависимость от NLog
                 var configureLogging = startupConfiguration.ConfigureLogging ?? NLogLogging.ConfigureLogging;
                 _buildContext.LoggerFactory = configureLogging();
                 _buildContext.Logger = _buildContext.LoggerFactory.CreateLogger("Bootstrap");
@@ -68,13 +69,23 @@ namespace MicroComponents.Bootstrap
                 _buildContext.StartupInfo = ReflectionUtils.GetStartupInfo();
 
                 // Переключим текущую директорию на директорию запуска.
-                Directory.SetCurrentDirectory(_buildContext.StartupInfo.StartupDir);
-                _buildContext.StartupInfo.CurrentDirectory = _buildContext.StartupInfo.StartupDir;
+                Directory.SetCurrentDirectory(_buildContext.StartupInfo.BaseDirectory);
+                _buildContext.StartupInfo.CurrentDirectory = _buildContext.StartupInfo.BaseDirectory;
 
                 // Загрузка сборок в память
-                _buildContext.Assemblies = ReflectionUtils.LoadAssemblies(_buildContext.StartupInfo.StartupDir, _buildContext.StartupConfiguration.AssemblyScanPatterns);
+                _buildContext.Assemblies = ReflectionUtils
+                    .LoadAssemblies(_buildContext.StartupInfo.BaseDirectory, _buildContext.StartupConfiguration.AssemblyScanPatterns)
+                    .Concat(new[] { typeof(ApplicationBuilder).Assembly })
+                    .ToArray();
 
-                //todo: diagnostics to many assemblies. set AssemblyScanPatterns
+                _buildContext.Logger.LogDebug($"Loaded {_buildContext.Assemblies.Length} assemblies");
+
+                if (_buildContext.Assemblies.Length > 20)
+                {
+                    var assemblyScanPatterns = _buildContext.StartupConfiguration.AssemblyScanPatterns;
+                    var assemblyScanPatternsText = String.Join(",", assemblyScanPatterns);
+                    _buildContext.Logger.LogWarning($"Diagnostic: too many assemblies found. Specify AssemblyScanPatterns. Loaded: {_buildContext.Assemblies.Length} assemblies, AssemblyScanPatterns: {assemblyScanPatternsText}");
+                }
 
                 // Список типов
                 _buildContext.ExportedTypes = _buildContext.Assemblies.SelectMany(assembly => assembly.GetDefinedTypesSafe()).ToArray();
@@ -107,7 +118,6 @@ namespace MicroComponents.Bootstrap
 
                     // Строим провайдер.
                     _buildContext.ServiceProvider = _buildContext.ServiceCollection.BuildServiceProvider();
-
 
                     if (startupConfiguration.ExternalBuilder != null)
                     {
@@ -172,13 +182,16 @@ namespace MicroComponents.Bootstrap
             // Регистрируем типы по атрибуту [Register]
             services.RegisterWithRegisterAttribute(buildContext.ExportedTypes);
 
+            // todo: зарегистрировать не исходные типы, а результирующий
+            services.AddSingleton(buildContext.StartupConfiguration);
+            services.AddSingleton(buildContext.StartupInfo);
 
             var modulesOptions = startupConfiguration.Modules;
             startupConfiguration.ConfigureModules(modulesOptions);
 
             // Регистрируем модули.           
             List<Type> moduleTypes = new List<Type>();
-            if(modulesOptions.AutoDiscoverModules)
+            if (modulesOptions.AutoDiscoverModules)
             {
                 moduleTypes = buildContext.ExportedTypes.GetClassTypesAssignableTo<IModule>().ToList();
 
@@ -193,10 +206,10 @@ namespace MicroComponents.Bootstrap
                 logger.LogInformation("UserDefinedModules modules:");
                 foreach (var moduleType in userDefinedModules)
                     logger.LogInformation($"UserDefined module: {moduleType.Name}");
-                moduleTypes.AddRange(userDefinedModules); 
+                moduleTypes.AddRange(userDefinedModules);
             }
 
-            if(moduleTypes.Count > 0)
+            if (moduleTypes.Count > 0)
                 services.RegisterModules(moduleTypes);
 
             logger.LogInformation("ConfigureServices finished");

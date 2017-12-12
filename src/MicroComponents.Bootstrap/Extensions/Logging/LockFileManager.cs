@@ -11,7 +11,7 @@ namespace MicroComponents.Bootstrap.Extensions.Logging
     /// <summary>
     /// Создание и блокировка файла с pid для логирования.
     /// </summary>
-    public class PidFileManager : IStoppable
+    public class LockFileManager : IStoppable
     {
         private const int MaxFailedAttempts = 10;
         private readonly string _directory;
@@ -30,7 +30,7 @@ namespace MicroComponents.Bootstrap.Extensions.Logging
         /// </summary>
         /// <param name="logDirectory">Путь к папке логов</param>
         /// <param name="profileName">Имя профиля</param>
-        public PidFileManager(string logDirectory, string profileName)
+        public LockFileManager(string logDirectory, string profileName)
         {
             _directory = logDirectory;
             _profileName = profileName?.CleanFileName();
@@ -45,7 +45,7 @@ namespace MicroComponents.Bootstrap.Extensions.Logging
         /// <returns>Возвращает true, если файла с заданным идентификатором нет.</returns>
         public bool CheckInstanceId(string instanceId)
         {
-            return !File.Exists(Path.Combine(_directory, $"{_profileName}_{instanceId}.lock"));
+            return !File.Exists(GetLockFileName(instanceId));
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace MicroComponents.Bootstrap.Extensions.Logging
         public void CreateAndLockPidFile(string instanceId)
         {
             CurrentInstanceId = instanceId;
-            _currentPidFile = Path.Combine(_directory, $"{_profileName}_{instanceId}.lock");
+            _currentPidFile = GetLockFileName(instanceId);
 
             var succeed = false;
 
@@ -80,7 +80,7 @@ namespace MicroComponents.Bootstrap.Extensions.Logging
                     if (++_failedAttempts >= MaxFailedAttempts)
                         throw;
                     instanceId = GetNextInstanceId().ToString();
-                    _currentPidFile = Path.Combine(_directory, $"{_profileName}_{instanceId}.lock");
+                    _currentPidFile = GetLockFileName(instanceId);
                 }
             }
 
@@ -88,6 +88,11 @@ namespace MicroComponents.Bootstrap.Extensions.Logging
             var info = new UTF8Encoding(true).GetBytes(Process.GetCurrentProcess().Id.ToString());
             _lock.Write(info, 0, info.Length);
             _lock.Flush();
+        }
+
+        private string GetLockFileName(string instanceId)
+        {
+            return Path.Combine(_directory, $"{_profileName}_{instanceId}.lock");
         }
 
         /// <summary>

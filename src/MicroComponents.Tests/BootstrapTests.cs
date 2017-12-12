@@ -5,6 +5,7 @@ using MicroComponents.Bootstrap;
 using MicroComponents.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
@@ -181,7 +182,7 @@ namespace MicroComponents.Tests
                 ServiceCollection = serviceCollection,
                 Modules = new ModulesOptions
                 {
-                    ModuleTypes = new [] { typeof(TestModule1) }
+                    ModuleTypes = new[] { typeof(TestModule1) }
                 }
             };
             var buildContext = new ApplicationBuilder().Build(startupOptions);
@@ -196,7 +197,7 @@ namespace MicroComponents.Tests
             var serviceCollection = new ServiceCollection();
 
             // Регистрируем конфигурацию.
-            serviceCollection.AddSingleton(new TestModule2Configuration {ConfigurationValue = "Test"});
+            serviceCollection.AddSingleton(new TestModule2Configuration { ConfigurationValue = "Test" });
 
             var startupOptions = new StartupConfiguration
             {
@@ -256,7 +257,7 @@ namespace MicroComponents.Tests
 
             var sampleOptions = serviceProvider.GetService<SampleOptions>();
             sampleOptions.Should().NotBeNull();
-            sampleOptions.Value.Should().Be("ValueFromPlaceholder");         
+            sampleOptions.Value.Should().Be("ValueFromPlaceholder");
         }
 
         [Test]
@@ -302,6 +303,25 @@ namespace MicroComponents.Tests
             var configuration = serviceProvider.GetService<IConfiguration>();
             configuration.Should().NotBeNull();
             configuration["Configuration:PropertyWithPlaceholder"].Should().Be(resultValue);
+        }
+
+        [Test]
+        public void Diagnostic_too_many_assemblies()
+        {
+            var testLoggerProvider = new TestLoggerProvider();
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Bootstrap",
+                ConfigureLogging = () =>
+                {
+                    var loggerFactory = new LoggerFactory();
+                    loggerFactory.AddProvider(testLoggerProvider);
+                    return loggerFactory;
+                }
+            };
+            new ApplicationBuilder().BuildAndStart(startupOptions);
+
+            testLoggerProvider.Log.Should().Contain("Diagnostic: too many assemblies found. Specify AssemblyScanPatterns.");
         }
     }
 

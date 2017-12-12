@@ -61,7 +61,7 @@ namespace MicroComponents.Bootstrap
         /// <summary>
         /// Usefull information collected on build process. This information can be logged after build process finished.
         /// </summary>
-        public List<KeyValuePair<string,string>> BuildInfo = new List<KeyValuePair<string, string>>();
+        public List<KeyValuePair<string, string>> BuildInfo = new List<KeyValuePair<string, string>>();
 
         /// <inheritdoc />
         public object GetService(Type serviceType)
@@ -84,7 +84,7 @@ namespace MicroComponents.Bootstrap
             Logger.LogInformation("*************************************");
 
             Logger.LogInformation("StartupApp      : {0}", StartupInfo.StartupApp);
-            Logger.LogInformation("StartupDir      : {0}", StartupInfo.StartupDir);
+            Logger.LogInformation("BaseDirectory   : {0}", StartupInfo.BaseDirectory);
             Logger.LogInformation("CurrentDir      : {0}", StartupInfo.CurrentDirectory);
 
             foreach (var pair in BuildInfo)

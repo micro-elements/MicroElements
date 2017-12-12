@@ -15,10 +15,9 @@ namespace MicroComponents.Bootstrap
         /// </summary>
         public string CurrentDirectory;
 
-        /// <summary>
-        /// Директория из которой запущено приложение.
-        /// </summary>
-        public string StartupDir;
+        /// <summary>Gets the pathname of the base directory that the assembly resolver uses to probe for assemblies.</summary>
+        /// <returns>the pathname of the base directory that the assembly resolver uses to probe for assemblies.</returns>
+        public string BaseDirectory;
 
         /// <summary>
         /// Путь к запускаемому бинарнику.
