@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
+using MicroElements.Bootstrap;
+using MicroElements.Bootstrap.Extensions;
 
-namespace MicroElements.Bootstrap.Extensions.Logging
+namespace MicroElements.Logging
 {
     public static class LoggingExtensions
     {

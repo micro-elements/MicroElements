@@ -5,7 +5,6 @@ using System.Linq;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.Bootstrap.Extensions.Configuration;
 using MicroElements.Bootstrap.Utils;
-using MicroElements.Bootstrap.Extensions.Logging;
 using MicroElements.DependencyInjection;
 using MicroElements.Logging;
 using Microsoft.Extensions.Configuration;

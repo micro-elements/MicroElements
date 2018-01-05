@@ -3,6 +3,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MicroElements.Logging
 {
+    /// <summary>
+    /// Default logging.
+    /// </summary>
     public class DefaultLogging
     {
         /// <summary>

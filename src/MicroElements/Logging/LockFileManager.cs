@@ -1,15 +1,17 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MicroElements.Bootstrap;
+using MicroElements.Bootstrap.Extensions;
 
-namespace MicroElements.Bootstrap.Extensions.Logging
+namespace MicroElements.Logging
 {
     /// <summary>
-    /// Создание и блокировка файла с pid для логирования.
+    /// РЎРѕР·РґР°РЅРёРµ Рё Р±Р»РѕРєРёСЂРѕРІРєР° С„Р°Р№Р»Р° СЃ pid РґР»СЏ Р»РѕРіРёСЂРѕРІР°РЅРёСЏ.
     /// </summary>
     public class LockFileManager : IStoppable
     {
@@ -21,15 +23,15 @@ namespace MicroElements.Bootstrap.Extensions.Logging
         private int _failedAttempts;
 
         /// <summary>
-        /// Возвращает № текущего запуска соответствующей конфигурации.
+        /// Р’РѕР·РІСЂР°С‰Р°РµС‚ в„– С‚РµРєСѓС‰РµРіРѕ Р·Р°РїСѓСЃРєР° СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё.
         /// </summary>
         public string CurrentInstanceId { get; private set; }
 
         /// <summary>
-        /// Конструктор
+        /// РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ
         /// </summary>
-        /// <param name="logDirectory">Путь к папке логов</param>
-        /// <param name="profileName">Имя профиля</param>
+        /// <param name="logDirectory">РџСѓС‚СЊ Рє РїР°РїРєРµ Р»РѕРіРѕРІ</param>
+        /// <param name="profileName">РРјСЏ РїСЂРѕС„РёР»СЏ</param>
         public LockFileManager(string logDirectory, string profileName)
         {
             _directory = logDirectory;
@@ -39,17 +41,17 @@ namespace MicroElements.Bootstrap.Extensions.Logging
         }
 
         /// <summary>
-        /// Проверяет наличие уже запущенного процесса с заданным идентификатором.
+        /// РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ СѓР¶Рµ Р·Р°РїСѓС‰РµРЅРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР° СЃ Р·Р°РґР°РЅРЅС‹Рј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРј.
         /// </summary>
-        /// <param name="instanceId">Произвольно заданный идентификатор.</param>
-        /// <returns>Возвращает true, если файла с заданным идентификатором нет.</returns>
+        /// <param name="instanceId">РџСЂРѕРёР·РІРѕР»СЊРЅРѕ Р·Р°РґР°РЅРЅС‹Р№ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ.</param>
+        /// <returns>Р’РѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё С„Р°Р№Р»Р° СЃ Р·Р°РґР°РЅРЅС‹Рј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРј РЅРµС‚.</returns>
         public bool CheckInstanceId(string instanceId)
         {
             return !File.Exists(GetLockFileName(instanceId));
         }
 
         /// <summary>
-        /// Создает и блокирует файл
+        /// РЎРѕР·РґР°РµС‚ Рё Р±Р»РѕРєРёСЂСѓРµС‚ С„Р°Р№Р»
         /// </summary>
         public void CreateAndLockPidFile()
         {
@@ -57,9 +59,9 @@ namespace MicroElements.Bootstrap.Extensions.Logging
         }
 
         /// <summary>
-        /// Создает и блокирует файл
+        /// РЎРѕР·РґР°РµС‚ Рё Р±Р»РѕРєРёСЂСѓРµС‚ С„Р°Р№Р»
         /// </summary>
-        /// <param name="instanceId">Заданный пользователем instance id</param>
+        /// <param name="instanceId">Р—Р°РґР°РЅРЅС‹Р№ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј instance id</param>
         public void CreateAndLockPidFile(string instanceId)
         {
             CurrentInstanceId = instanceId;
@@ -76,7 +78,7 @@ namespace MicroElements.Bootstrap.Extensions.Logging
                 }
                 catch (IOException)
                 {
-                    // превышено максимальное количество попыток
+                    // РїСЂРµРІС‹С€РµРЅРѕ РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕРїС‹С‚РѕРє
                     if (++_failedAttempts >= MaxFailedAttempts)
                         throw;
                     instanceId = GetNextInstanceId().ToString();
@@ -96,9 +98,9 @@ namespace MicroElements.Bootstrap.Extensions.Logging
         }
 
         /// <summary>
-        /// Разблокировать и удалить файл
+        /// Р Р°Р·Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ Рё СѓРґР°Р»РёС‚СЊ С„Р°Р№Р»
         /// </summary>
-        /// <returns>A <see cref="Task"/>Возвращает асинхронную операцию.</returns>
+        /// <returns>A <see cref="Task"/>Р’РѕР·РІСЂР°С‰Р°РµС‚ Р°СЃРёРЅС…СЂРѕРЅРЅСѓСЋ РѕРїРµСЂР°С†РёСЋ.</returns>
         public async Task StopAsync()
         {
             _lock?.Dispose();
@@ -111,10 +113,10 @@ namespace MicroElements.Bootstrap.Extensions.Logging
         #region Internal methods
 
         /// <summary>
-        /// Проверяет, заблокирован ли файл
+        /// РџСЂРѕРІРµСЂСЏРµС‚, Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ Р»Рё С„Р°Р№Р»
         /// </summary>
-        /// <param name="file">Проверяемый файл</param>
-        /// <returns>true если заблокирован, false в противном случае</returns>
+        /// <param name="file">РџСЂРѕРІРµСЂСЏРµРјС‹Р№ С„Р°Р№Р»</param>
+        /// <returns>true РµСЃР»Рё Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅ, false РІ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ</returns>
         private bool IsFileLocked(FileInfo file)
         {
             FileStream stream = null;
@@ -140,9 +142,9 @@ namespace MicroElements.Bootstrap.Extensions.Logging
         }
 
         /// <summary>
-        /// Возвращает первый свободный runNumber
+        /// Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРµСЂРІС‹Р№ СЃРІРѕР±РѕРґРЅС‹Р№ runNumber
         /// </summary>
-        /// <returns>Первый свободный номер runNumber по порядку с 0.</returns>
+        /// <returns>РџРµСЂРІС‹Р№ СЃРІРѕР±РѕРґРЅС‹Р№ РЅРѕРјРµСЂ runNumber РїРѕ РїРѕСЂСЏРґРєСѓ СЃ 0.</returns>
         private int GetNextInstanceId()
         {
             var existingIds = new List<int>();
@@ -176,7 +178,7 @@ namespace MicroElements.Bootstrap.Extensions.Logging
         }
 
         /// <summary>
-        /// Попытка удалить PID-файлы, если они не заблокированы другими экземплярами.
+        /// РџРѕРїС‹С‚РєР° СѓРґР°Р»РёС‚СЊ PID-С„Р°Р№Р»С‹, РµСЃР»Рё РѕРЅРё РЅРµ Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅС‹ РґСЂСѓРіРёРјРё СЌРєР·РµРјРїР»СЏСЂР°РјРё.
         /// </summary>
         private void DeletePidFiles()
         {
@@ -201,7 +203,7 @@ namespace MicroElements.Bootstrap.Extensions.Logging
 
                         if (currentRetry > MaxFailedAttempts)
                         {
-                            //InternalLogger.Error(ex, $"Не удалось удалить PID-файл {file}"); //todo: какой нафиг NLog?
+                            //InternalLogger.Error(ex, $"РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ PID-С„Р°Р№Р» {file}"); //todo: РєР°РєРѕР№ РЅР°С„РёРі NLog?
                             break;
                         }
                     }
