@@ -386,3 +386,5 @@ namespace MicroElements.Tests
         public string OptionalValue { get; set; }
     }
 }
+
+//todo: remove nunit or xunit
