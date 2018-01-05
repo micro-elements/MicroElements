@@ -11,11 +11,10 @@
     <Description>MicroComponents bootstrap contains bootstrapper for .net services.</Description>
     <PackageTags>microservices bootstrap</PackageTags>
     <Version>1.0.4</Version>
-    <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard2.0\MicroComponents.Bootstrap.xml</DocumentationFile>
+  <PropertyGroup>
+    <DocumentationFile>bin\$(Configuration)\netstandard2.0\MicroComponents.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

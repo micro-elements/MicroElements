@@ -3,16 +3,16 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RootNamespace>MicroComponents</RootNamespace>
+    <DocumentationFile>bin\$(Configuration)\netstandard2.0\MicroComponents.Abstractions.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <Company>MicroComponents</Company>
     <Authors>alexey.petriashev</Authors>
     <Description>MicroComponents is small components for fast start.</Description>
     <PackageTags>microservices</PackageTags>
     <Version>1.0.4</Version>
-    <RootNamespace>MicroComponents</RootNamespace>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <DocumentationFile>MicroComponents.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -139,6 +139,12 @@ namespace MicroComponents.Bootstrap
             return _buildContext;
         }
 
+        /// <inheritdoc />
+        public IApplicationBuilder ConfigureServices(Action<IServiceCollection> configureServices)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Запускаем приложение.
         /// </summary>

@@ -1,11 +1,15 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace MicroComponents.Bootstrap
 {
     public interface IApplicationBuilder
     {
+        /// <summary>
+        /// Builds application services according <see cref="StartupConfiguration"/>.
+        /// </summary>
+        /// <param name="startupConfiguration">Startup configuration.</param>
+        /// <returns>Build result.</returns>
         IBuildContext Build(StartupConfiguration startupConfiguration);
 
         /// <summary>

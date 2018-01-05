@@ -110,8 +110,9 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
             return builder.AddConfigurationFiles(configurationPath, new[] { "*.json", "*.xml" });
         }
 
-        private static IConfigurationBuilder AddFileConfiguration(IBuildContext buildContext, IConfigurationBuilder builder)
+        private static IConfigurationBuilder AddFileConfiguration(BuildContext buildContext, IConfigurationBuilder builder)
         {
+            //todo: use IBuildContext
             var startupConfiguration = buildContext.StartupConfiguration;
 
             var configurationPath = startupConfiguration.ConfigurationPath;
