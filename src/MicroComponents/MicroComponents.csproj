@@ -10,7 +10,7 @@
     <Company>MicroComponents.net</Company>
     <Description>MicroComponents bootstrap contains bootstrapper for .net services.</Description>
     <PackageTags>microservices bootstrap</PackageTags>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -32,8 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MicroComponents.DependencyInjection\MicroComponents.DependencyInjection.csproj" />
     <ProjectReference Include="..\MicroComponents.Abstractions\MicroComponents.Abstractions.csproj" />
+    <ProjectReference Include="..\MicroComponents.DependencyInjection\MicroComponents.DependencyInjection.csproj" />
   </ItemGroup>
 
 </Project>
