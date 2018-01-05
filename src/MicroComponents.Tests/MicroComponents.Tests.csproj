@@ -16,33 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MicroComponents.Bootstrap\MicroComponents.Bootstrap.csproj" />
     <ProjectReference Include="..\MicroComponents\MicroComponents.csproj" />
+    <ProjectReference Include="..\MicroComponents.Abstractions\MicroComponents.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="TestsConfiguration\Bootstrap\common\sample_common.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestsConfiguration\Bootstrap\placeholders\placeholders.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestsConfiguration\Bootstrap\profile1\sample.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestsConfiguration\Bootstrap\profile1\sub_profile1\sample.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestsConfiguration\Bootstrap\profile1\sub_profile2\sample.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestsConfiguration\Bootstrap\placeholders\sample.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestsConfiguration\Bootstrap\profile2\sample.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestsConfiguration\Bootstrap\sample.json">
+    <None Update="TestsConfiguration\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -1,0 +1,303 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MicroComponents.Abstractions</name>
+    </assembly>
+    <members>
+        <member name="T:MicroComponents.Bootstrap.BuildContext">
+            <summary>
+            Контекст построения.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.BuildContext.StartupConfiguration">
+            <summary>
+            Параметры запуска приложения.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.BuildContext.ServiceCollection">
+            <summary>
+            ServiceCollection. It can be passed from <see cref="F:MicroComponents.Bootstrap.BuildContext.StartupConfiguration"/> or created inside build process.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.BuildContext.ServiceProvider">
+            <summary>
+            Service provider builded on the end of build process.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.BuildContext.ConfigurationRoot">
+            <summary>
+            Root of loaded configuration.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.BuildContext.LoggerFactory">
+            <summary>
+            Фабрика логирования.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.BuildContext.Logger">
+            <summary>
+            Основной логгер для процесса инициализации.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.BuildContext.StartupInfo">
+            <summary>
+            Информация об окружении.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.BuildContext.Assemblies">
+            <summary>
+            Loaded assemblies.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.BuildContext.ExportedTypes">
+            <summary>
+            All exported types from loaded assemblies.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.BuildContext.BuildInfo">
+            <summary>
+            Usefull information collected on build process. This information can be logged after build process finished.
+            </summary>
+        </member>
+        <member name="M:MicroComponents.Bootstrap.BuildContext.GetService(System.Type)">
+            <inheritdoc />
+        </member>
+        <member name="M:MicroComponents.Bootstrap.BuildContext.LogHeader">
+            <summary>
+            Вывод в лог заголовочной информации.
+            </summary>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.Constants">
+            <summary>
+            Default values and constants.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.Constants.DefaultAssemblyScanPatterns">
+            <summary>
+            Default assembly scan pattern.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.Constants.DefaultLogsPath">
+            <summary>
+            Default logs path.
+            </summary>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.IBuildContext">
+            <summary>
+            Build context.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.IBuildContext.ServiceCollection">
+            <summary>
+            ServiceCollection. It can be passed from <see cref="T:MicroComponents.Bootstrap.StartupConfiguration"/> or created inside build process.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.IBuildContext.ServiceProvider">
+            <summary>
+            Service provider builded on the end of build process.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.IBuildContext.ConfigurationRoot">
+            <summary>
+            Root of loaded configuration.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.IBuildContext.Assemblies">
+            <summary>
+            Loaded assemblies.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.IBuildContext.ExportedTypes">
+            <summary>
+            All exported types from loaded assemblies.
+            </summary>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.IModule">
+            <summary>
+            Registration module.
+            </summary>
+        </member>
+        <member name="M:MicroComponents.Bootstrap.IModule.ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Configure services.
+            </summary>
+            <param name="services">Service collection.</param>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.IModuleExt">
+            <summary>
+            Extended module. Has access to <see cref="T:MicroComponents.Bootstrap.IBuildContext"/>.
+            </summary>
+        </member>
+        <member name="M:MicroComponents.Bootstrap.IModuleExt.ConfigureServices(MicroComponents.Bootstrap.IBuildContext)">
+            <summary>
+            Configure services.
+            </summary>
+            <param name="buildContext">Service collection.</param>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.IStartable">
+            <summary>
+            Startable service. Defines contract for start service.
+            </summary>
+        </member>
+        <member name="M:MicroComponents.Bootstrap.IStartable.StartAsync(System.Threading.CancellationToken)">
+            <summary>
+            Starts service.
+            </summary>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.IStartableMetadata">
+            <summary>
+            Metadata for startable component.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.IStartableMetadata.StartOrder">
+            <summary>
+            Order of start. Can be used when you need deterministic ordered start.
+            </summary>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.IStoppable">
+            <summary>
+            Stoppable service. Defines contract for service stop.
+            </summary>
+        </member>
+        <member name="M:MicroComponents.Bootstrap.IStoppable.StopAsync">
+            <summary>
+            Stop service.
+            </summary>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.StartupConfiguration">
+            <summary>
+            Параметры запуска приложения.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.CommandLineArgs">
+            <summary>
+            Параметры командной строки.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.ConfigurationPath">
+            <summary>
+            Путь к папке с конфигурациями (абсолютный или относительный).
+            Если путь задан, то будет считана конфигурация из этой папки.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.Profile">
+            <summary>
+            Configuration profile.
+            Can be hierarchical. For example: 'Profile/SubProfile'
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.LogsPath">
+            <summary>
+            The path for logs. Can be relative or absolute. 
+            <p>Default value is 'logs'.</p>
+            <p>Evaluated value is set to Environment Variables.</p>
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.InstanceId">
+            <summary>
+            Идентификатор запущенного приложения.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.AssemblyScanPatterns">
+            <summary>
+            Wildcard patterns for assembly loading.
+            <para>Use something like "YourApp.*.dll"</para>
+            <para>Default: { "*.dll", "*.exe" }</para>
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.DumpConfigurationToLog">
+            <summary>
+            If <c>true</c> dumps all configuration values to Logger.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.ServiceCollection">
+            <summary>
+            Коллекция сервисов <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection"/> используется для конфигурирования контейнера.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.BeginConfiguration">
+            <summary>
+            Действие, позволяющее добавить свою логику конфигурации в начало конфигурирования конфигурации.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.EndConfiguration">
+            <summary>
+            Действие, позволяющее добавить свою логику конфигурации в конец конфигурирования конфигурации.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.StartupConfiguration.ConfigureLogging">
+            <summary>
+            Получение сконфигурированой фабрики логирования. Если не задано, то конфигурируется по умолчанию.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.ModulesOptions.AutoDiscoverModules">
+            <summary>
+            Автоматический поиск модулей среди загруженных типов.
+            </summary>
+        </member>
+        <member name="P:MicroComponents.Bootstrap.ModulesOptions.ModuleTypes">
+            <summary>
+            Типы модулей, заданные вручную.
+            </summary>
+        </member>
+        <member name="T:MicroComponents.Bootstrap.StartupInfo">
+            <summary>
+            Информация об окружении.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.StartupInfo.Version">
+            <summary>
+            Версия приложения.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.StartupInfo.CurrentDirectory">
+            <summary>
+            Текущая директория.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.StartupInfo.BaseDirectory">
+            <summary>Gets the pathname of the base directory that the assembly resolver uses to probe for assemblies.</summary>
+            <returns>the pathname of the base directory that the assembly resolver uses to probe for assemblies.</returns>
+        </member>
+        <member name="F:MicroComponents.Bootstrap.StartupInfo.StartupApp">
+            <summary>
+            Путь к запускаемому бинарнику.
+            </summary>
+        </member>
+        <member name="T:MicroComponents.Configuration.CommandLineArgs">
+            <summary>
+            Аргументы командной строки.
+            </summary>
+        </member>
+        <member name="F:MicroComponents.Configuration.CommandLineArgs.Null">
+            <summary>
+            Null object.
+            </summary>
+        </member>
+        <member name="M:MicroComponents.Configuration.CommandLineArgs.#ctor(System.String[])">
+            <summary>
+            Конструктор.
+            </summary>
+            <param name="args">Аргументы командной строки.</param>
+        </member>
+        <member name="P:MicroComponents.Configuration.CommandLineArgs.Args">
+            <summary>
+            Аргументы командной строки.
+            </summary>
+        </member>
+        <member name="T:MicroComponents.Configuration.IDefaultValueProvider`1">
+            <summary>
+            Провайдер значения по-умолчанию для типа.
+            </summary>
+            <typeparam name="T">Тип.</typeparam>
+        </member>
+        <member name="M:MicroComponents.Configuration.IDefaultValueProvider`1.GetDefault">
+            <summary>
+            Получение значения по-умолчанию.
+            </summary>
+            <returns>Значение по-умолчанию.</returns>
+        </member>
+    </members>
+</doc>

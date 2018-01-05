@@ -68,30 +68,23 @@ namespace MicroComponents.SampleWebApiService
             if (startupConfiguration == null)
                 throw new ArgumentNullException(nameof(startupConfiguration));
 
-      
-            
-            var buildContext = new ApplicationBuilder().Build(startupConfiguration);
+            hostBuilder.ConfigureAppConfiguration(delegate (WebHostBuilderContext context, IConfigurationBuilder builder)
+            {
+                // todo: интеграция с AspNetCore EnvironmentName
+                context.HostingEnvironment.EnvironmentName = startupConfiguration.Profile;
+            });
+            hostBuilder.UseApplicationInsights();//вместо этого можно использовать serviceCollection.Add with IConfiguration
 
-            Action<IServiceCollection> configureServices;
-
-            //hostBuilder.ConfigureAppConfiguration((context, builder) => { buildContext.ConfigurationRoot });
-            hostBuilder.UseConfiguration(buildContext.ConfigurationRoot);
-
-            hostBuilder.ConfigureServices(ConfigureServices1);
-            hostBuilder.ConfigureServices(ConfigureServices2);
-            //hostBuilder.ConfigureServices(collection => buildContext.ServiceCollection)
+            hostBuilder.ConfigureServices(collection => ConfigureServices(hostBuilder, collection, startupConfiguration));
 
             return hostBuilder;
         }
 
-        private static void ConfigureServices1(IServiceCollection serviceCollection)
+        private static void ConfigureServices(IWebHostBuilder hostBuilder, IServiceCollection serviceCollection, StartupConfiguration startupConfiguration)
         {
-            throw new NotImplementedException();
-        }
-
-        private static void ConfigureServices2(WebHostBuilderContext webHostBuilderContext, IServiceCollection serviceCollection)
-        {
-            throw new NotImplementedException();
+            startupConfiguration.ServiceCollection = serviceCollection;
+            var buildContext = new ApplicationBuilder().Build(startupConfiguration);
+            hostBuilder.UseConfiguration(buildContext.ConfigurationRoot);
         }
     }
 }

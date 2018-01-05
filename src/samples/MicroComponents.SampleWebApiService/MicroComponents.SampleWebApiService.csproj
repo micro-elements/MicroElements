@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\MicroComponents.Bootstrap\MicroComponents.Bootstrap.csproj" />
+    <ProjectReference Include="..\..\MicroComponents\MicroComponents.csproj" />
   </ItemGroup>
 
 </Project>

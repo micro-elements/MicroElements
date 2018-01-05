@@ -7,6 +7,7 @@ using MicroComponents.Bootstrap.Extensions.Configuration;
 using MicroComponents.Bootstrap.Utils;
 using MicroComponents.Bootstrap.Extensions.Logging;
 using MicroComponents.DependencyInjection;
+using MicroComponents.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -57,8 +58,7 @@ namespace MicroComponents.Bootstrap
                 serviceCollection.AddSingleton(unlocker);
 
                 // Получение сконфигурированной фабрики логирования.
-                // todo: убрать зависимость от NLog
-                var configureLogging = startupConfiguration.ConfigureLogging ?? NLogLogging.ConfigureLogging;
+                var configureLogging = startupConfiguration.ConfigureLogging ?? DefaultLogging.ConfigureLogging;
                 _buildContext.LoggerFactory = configureLogging();
                 _buildContext.Logger = _buildContext.LoggerFactory.CreateLogger("Bootstrap");
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,5 +35,15 @@ namespace MicroComponents.Bootstrap
         /// All exported types from loaded assemblies.
         /// </summary>
         Type[] ExportedTypes { get; }
+
+        /// <summary>
+        /// Adds build info.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        void AddBuildInfo(string name, string value);
+
+
+        IReadOnlyCollection<KeyValuePair<string, string>> GetBuildInfo();
     }
 }

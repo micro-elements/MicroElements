@@ -63,6 +63,16 @@ namespace MicroComponents.Bootstrap
         /// </summary>
         public List<KeyValuePair<string, string>> BuildInfo = new List<KeyValuePair<string, string>>();
 
+        public void AddBuildInfo(string name, string value)
+        {
+            BuildInfo.Add(new KeyValuePair<string, string>(name, value));
+        }
+
+        public IReadOnlyCollection<KeyValuePair<string, string>> GetBuildInfo()
+        {
+            return BuildInfo;
+        }
+
         /// <inheritdoc />
         public object GetService(Type serviceType)
         {

@@ -82,6 +82,11 @@ namespace MicroComponents.Bootstrap
         /// </summary>
         public Func<ILoggerFactory> ConfigureLogging { get; set; }
 
+        public Action<ILoggerFactory> ConfigureLogging2 { get; set; }
+
+        public Func<IServiceCollection, ILoggerFactory, ILoggerFactory> ConfigureLogging3 { get; set; }
+
+
         #endregion
     }
 

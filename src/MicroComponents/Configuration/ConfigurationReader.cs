@@ -34,7 +34,7 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
             // Добавляем стандартное конфигурирование из файловой директории.
             AddFileConfiguration(buildContext, builder);
 
-            // Параметры командной строки перекрывают все
+            // Параметры командной строки перекрывают все.
             builder = builder.AddCommandLine(startupConfiguration.CommandLineArgs?.Args ?? new string[0]);
 
             // Добавляем конечное пользовательское конфигурирование.
@@ -110,28 +110,31 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
             return builder.AddConfigurationFiles(configurationPath, new[] { "*.json", "*.xml" });
         }
 
-        private static IConfigurationBuilder AddFileConfiguration(BuildContext buildContext, IConfigurationBuilder builder)
+        private static IConfigurationBuilder AddFileConfiguration(IBuildContext buildContext, IConfigurationBuilder builder)
         {
             var startupConfiguration = buildContext.StartupConfiguration;
 
-            if (startupConfiguration.ConfigurationPath != null)
+            var configurationPath = startupConfiguration.ConfigurationPath;
+            var configurationProfile = startupConfiguration.Profile;
+
+            if (configurationPath != null)
             {
                 // Базовый путь для чтения конфигураций
-                var configurationBasePath = Path.IsPathRooted(startupConfiguration.ConfigurationPath)
-                    ? startupConfiguration.ConfigurationPath
-                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, startupConfiguration.ConfigurationPath);
+                var configurationBasePath = Path.IsPathRooted(configurationPath)
+                    ? configurationPath
+                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configurationPath);
 
                 if (!Directory.Exists(configurationBasePath))
                     throw new Exception($"ConfigurationBasePath ${configurationBasePath} doesn't exists");
 
-                buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationBasePath", configurationBasePath));
+                buildContext.AddBuildInfo("ConfigurationBasePath", configurationBasePath);
 
                 // Добавляем файлы из корня конфигурации, переопределяем конфигурацию профильными конфигами
                 builder = builder.AddConfigurationFiles(configurationBasePath);
 
-                if (!string.IsNullOrEmpty(startupConfiguration.Profile))
+                if (!string.IsNullOrEmpty(configurationProfile))
                 {
-                    var dirs = startupConfiguration.Profile.PathNormalize().Split(Path.DirectorySeparatorChar, '.');
+                    var dirs = configurationProfile.PathNormalize().Split(Path.DirectorySeparatorChar, '.');
 
                     var cumulativePath = configurationBasePath.PathNormalize();
                     string profileDirectory = "";
@@ -144,13 +147,13 @@ namespace MicroComponents.Bootstrap.Extensions.Configuration
                         if (Directory.Exists(subProfileDirectory))
                         {
                             profileDirectory = subProfileDirectory;
-                            
+
                             // Переопределяем конфигурацию профильными конфигами
                             builder = builder.AddConfigurationFiles(subProfileDirectory);
                         }
                     }
 
-                    buildContext.BuildInfo.Add(new KeyValuePair<string, string>("ConfigurationProfileDirectory", profileDirectory));
+                    buildContext.AddBuildInfo("ConfigurationProfileDirectory", profileDirectory);
                 }
             }
             return builder;

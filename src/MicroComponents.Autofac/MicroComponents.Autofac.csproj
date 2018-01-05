@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MicroComponents.DependencyInjection\MicroComponents.DependencyInjection.csproj" />
-    <ProjectReference Include="..\MicroComponents\MicroComponents.csproj" />
+    <ProjectReference Include="..\MicroComponents.Abstractions\MicroComponents.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

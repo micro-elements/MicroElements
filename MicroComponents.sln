@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents.Bootstrap", "src\MicroComponents.Bootstrap\MicroComponents.Bootstrap.csproj", "{D6894AB7-8160-42A4-8E59-C67D521DA133}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents", "src\MicroComponents\MicroComponents.csproj", "{D6894AB7-8160-42A4-8E59-C67D521DA133}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents", "src\MicroComponents\MicroComponents.csproj", "{F2397A8C-1503-4110-B087-894E5550C79D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents.Abstractions", "src\MicroComponents.Abstractions\MicroComponents.Abstractions.csproj", "{F2397A8C-1503-4110-B087-894E5550C79D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents.Configuration", "src\MicroComponents.Configuration\MicroComponents.Configuration.csproj", "{05CBD2AA-36BE-4FF0-8C89-4E74DD7BA18F}"
 EndProject
@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents.DependencyI
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents.Autofac", "src\MicroComponents.Autofac\MicroComponents.Autofac.csproj", "{7B56E4BD-A5B7-4F50-B86D-41E43FA63679}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroComponents.SampleWebApiService", "src\samples\MicroComponents.SampleWebApiService\MicroComponents.SampleWebApiService.csproj", "{A6C3FA4D-19ED-4FF9-A237-8469AA5FA449}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroComponents.SampleWebApiService", "src\samples\MicroComponents.SampleWebApiService\MicroComponents.SampleWebApiService.csproj", "{A6C3FA4D-19ED-4FF9-A237-8469AA5FA449}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{CA60429E-6571-4F81-AD36-5E977BEA146C}"
 EndProject
