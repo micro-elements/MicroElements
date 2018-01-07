@@ -1,0 +1,8 @@
+﻿{
+  "Configuration": {
+    "SampleOptions": {
+      "Value": "OverridenValueProfile1",
+      "OptionalValue": "OptionalValueProfile1"
+    }
+  }
+}
