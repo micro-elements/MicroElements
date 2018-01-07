@@ -1,6 +1,6 @@
 ﻿# MicroElements
 
-![logo](image/MicroElements_64.png "MicroElements Logo")
+![logo](image/logo.png "MicroElements Logo")
 
 MicroElements is component set for fast bootstraping your microservices.
 
