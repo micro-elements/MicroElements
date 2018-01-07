@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
@@ -12,11 +15,11 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
     {
         private readonly IConfigurationRoot _configurationRoot;
         private readonly IEnumerable<IValueEvaluator> _evaluators;
-        private readonly Dictionary<string,IValueEvaluator> _evaluators2 = new Dictionary<string, IValueEvaluator>();
+        private readonly Dictionary<string, IValueEvaluator> _evaluators2 = new Dictionary<string, IValueEvaluator>();
         private readonly Dictionary<string, string> _propertiesWithPlaceholders;
 
         /// <summary>
-        /// Конструктор.
+        /// Initializes a new instance of the <see cref="PlaceholdersConfigurationProvider"/> class.
         /// </summary>
         /// <param name="configurationRoot">Корень конфигурации.</param>
         /// <param name="evaluators">Список вычислителей.</param>

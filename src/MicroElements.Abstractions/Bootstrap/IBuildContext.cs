@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
@@ -39,11 +42,14 @@ namespace MicroElements.Bootstrap
         /// <summary>
         /// Adds build info.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
+        /// <param name="name">Name.</param>
+        /// <param name="value">Value.</param>
         void AddBuildInfo(string name, string value);
 
-
+        /// <summary>
+        /// Gets build info.
+        /// </summary>
+        /// <returns>Build info.</returns>
         IReadOnlyCollection<KeyValuePair<string, string>> GetBuildInfo();
     }
 }

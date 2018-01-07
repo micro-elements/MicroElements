@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using MicroElements.Configuration;
 using MicroElements.DependencyInjection;
@@ -18,7 +21,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         private readonly IKeyedServiceCollection<string, IDefaultValueProvider<TOptions>> _defaultValueProviders;
 
         /// <summary>
-        /// Конструктор.
+        /// Initializes a new instance of the <see cref="OptionsFactory{TOptions}"/> class.
         /// </summary>
         /// <param name="setups">setups.</param>
         /// <param name="defaultValueProviders">Провайдер значения по-умолчанию для типа.</param>

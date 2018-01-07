@@ -1,4 +1,7 @@
-﻿namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
 {
     /// <summary>
     /// Вычислитель значения.

@@ -1,18 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\..\build\common.props" />
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <RootNamespace>MicroElements</RootNamespace>
-    <DocumentationFile>bin\$(Configuration)\netstandard2.0\MicroElements.Abstractions.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Company>MicroElements</Company>
-    <Authors>alexey.petriashev</Authors>
     <Description>MicroElements is small components for fast start.</Description>
     <PackageTags>microservices</PackageTags>
-    <Version>1.0.5</Version>
   </PropertyGroup>
 
   <ItemGroup>

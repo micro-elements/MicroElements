@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
@@ -16,7 +19,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         {
             if (targetObject == null)
                 throw new ArgumentNullException(nameof(targetObject));
-            
+
             if (args != null && args.Length > 0)
             {
                 var configuration = new ConfigurationBuilder()
@@ -33,7 +36,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         /// <returns>Параметры командной строки или пустой массив.</returns>
         public static string[] GetCommandLine()
         {
-            var commandLineArgs = Environment.GetCommandLineArgs();         
+            var commandLineArgs = Environment.GetCommandLineArgs();
             return commandLineArgs.Length > 1 ? commandLineArgs.Skip(1).ToArray() : Array.Empty<string>();
         }
     }

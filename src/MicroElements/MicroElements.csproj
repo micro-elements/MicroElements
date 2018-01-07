@@ -1,20 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\..\build\common.props" />
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Authors>alexey.petriashev</Authors>
-    <Company>MicroElements.net</Company>
+    <PackageId>MicroElements</PackageId>
     <Description>MicroElements bootstrap contains bootstrapper for .net services.</Description>
-    <PackageTags>microservices bootstrap</PackageTags>
-    <Version>1.0.5</Version>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <DocumentationFile>bin\$(Configuration)\netstandard2.0\MicroElements.xml</DocumentationFile>
+    <PackageTags>microservices bootstrap configuration modules</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

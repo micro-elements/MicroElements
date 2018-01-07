@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 namespace MicroElements.DependencyInjection
 {
@@ -33,14 +36,14 @@ namespace MicroElements.DependencyInjection
         public object MetadataValue { get; set; }
 
         /// <summary>
-        /// Создает новый атрибут регистрации зависимости.
+        /// Initializes a new instance of the <see cref="RegisterAttribute"/> class.
         /// </summary>
         public RegisterAttribute()
         {
         }
 
         /// <summary>
-        /// Создает новый атрибут регистрации зависимости.
+        /// Initializes a new instance of the <see cref="RegisterAttribute"/> class.
         /// </summary>
         /// <param name="services">Типы, в качестве которых необходимо зарегистрировать зависимость.
         ///  Если типы не указаны, то компонент будет зарегистрирован как AsImplementedInterfaces.</param>

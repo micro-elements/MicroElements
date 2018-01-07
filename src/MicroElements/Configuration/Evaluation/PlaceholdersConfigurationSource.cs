@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 
 namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
@@ -12,7 +15,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
         private readonly IEnumerable<IValueEvaluator> _evaluators;
 
         /// <summary>
-        /// Конструктор.
+        /// Initializes a new instance of the <see cref="PlaceholdersConfigurationSource"/> class.
         /// </summary>
         /// <param name="configurationRoot">Корень конфигурации.</param>
         /// <param name="evaluators"></param>

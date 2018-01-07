@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -28,7 +31,7 @@ namespace MicroElements.Logging
         public string CurrentInstanceId { get; private set; }
 
         /// <summary>
-        /// Конструктор
+        /// Initializes a new instance of the <see cref="LockFileManager"/> class.
         /// </summary>
         /// <param name="logDirectory">Путь к папке логов</param>
         /// <param name="profileName">Имя профиля</param>
@@ -80,7 +83,10 @@ namespace MicroElements.Logging
                 {
                     // превышено максимальное количество попыток
                     if (++_failedAttempts >= MaxFailedAttempts)
+                    {
                         throw;
+                    }
+
                     instanceId = GetNextInstanceId().ToString();
                     _currentPidFile = GetLockFileName(instanceId);
                 }
@@ -90,11 +96,6 @@ namespace MicroElements.Logging
             var info = new UTF8Encoding(true).GetBytes(Process.GetCurrentProcess().Id.ToString());
             _lock.Write(info, 0, info.Length);
             _lock.Flush();
-        }
-
-        private string GetLockFileName(string instanceId)
-        {
-            return Path.Combine(_directory, $"{_profileName}_{instanceId}.lock");
         }
 
         /// <summary>
@@ -108,6 +109,11 @@ namespace MicroElements.Logging
             var fi = new FileInfo(_currentPidFile);
             if (!IsFileLocked(fi))
                 await Task.Run(() => fi.Delete()).ConfigureAwait(false);
+        }
+
+        private string GetLockFileName(string instanceId)
+        {
+            return Path.Combine(_directory, $"{_profileName}_{instanceId}.lock");
         }
 
         #region Internal methods

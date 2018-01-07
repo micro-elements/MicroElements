@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 
 namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
@@ -12,7 +15,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
         private readonly string _rootPath;
 
         /// <summary>
-        /// Конструктор.
+        /// Initializes a new instance of the <see cref="PreprocessConfigurationSource"/> class.
         /// </summary>
         /// <param name="jsonConfigurationSource">jsonConfigurationSource</param>
         /// <param name="rootPath">rootPath</param>

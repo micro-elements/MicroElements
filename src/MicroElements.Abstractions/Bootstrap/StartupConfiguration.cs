@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using MicroElements.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,7 +55,8 @@ namespace MicroElements.Bootstrap
         /// </summary>
         public bool DumpConfigurationToLog { get; set; } = true;
 
-        public Action<ModulesOptions> ConfigureModules = options => { };
+        public Action<ModulesOptions> ConfigureModules { get; set; } = options => { };
+
         public ModulesOptions Modules { get; set; } = new ModulesOptions();
 
         #region Dynamic
@@ -88,18 +92,5 @@ namespace MicroElements.Bootstrap
 
 
         #endregion
-    }
-
-    public class ModulesOptions
-    {
-        /// <summary>
-        /// Автоматический поиск модулей среди загруженных типов.
-        /// </summary>
-        public bool AutoDiscoverModules { get; set; } = false;
-
-        /// <summary>
-        /// Типы модулей, заданные вручную.
-        /// </summary>
-        public Type[] ModuleTypes { get; set; } = new Type[0];
     }
 }

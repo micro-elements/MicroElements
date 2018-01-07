@@ -1,21 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
+  <Import Project="..\..\build\common.props" />
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Company>MicroElements</Company>
-    <Authors>alexey.petriashev</Authors>
-    <Description>MicroElements is small components for fast start.</Description>
-    <PackageTags>microservices</PackageTags>
-    <Version>1.0.3</Version>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard2.0\MicroElements.DependencyInjection.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

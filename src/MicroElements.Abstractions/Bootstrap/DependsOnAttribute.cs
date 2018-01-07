@@ -5,18 +5,13 @@ using System;
 
 namespace MicroElements.Bootstrap
 {
-    public interface IBuildStep
+    public class DependsOnAttribute : Attribute
     {
-        void Execute(BuildContext buildContext);
-    }
+        private string _buildStepName;
 
-    public class BuildStepAttribute : Attribute
-    {
-        private string _name;
-
-        public BuildStepAttribute(string name)
+        public DependsOnAttribute(string buildStepName)
         {
-            _name = name;
+            _buildStepName = buildStepName;
         }
     }
 }

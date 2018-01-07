@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 namespace MicroElements.Bootstrap.Utils
 {
@@ -23,7 +26,7 @@ namespace MicroElements.Bootstrap.Utils
         public TimeSpan Duration { get; private set; }
 
         /// <summary>
-        /// Конструктор.
+        /// Initializes a new instance of the <see cref="Measure"/> class.
         /// </summary>
         /// <param name="name">Имя измерения.</param>
         /// <param name="startTimeUtc">Время старта.</param>

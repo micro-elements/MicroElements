@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -15,7 +18,7 @@ namespace MicroElements.Bootstrap.Utils
         private readonly List<Measure> _measures = new List<Measure>();
 
         /// <summary>
-        /// Создание сессии измерения.
+        /// Initializes a new instance of the <see cref="MeasureSession"/> class.
         /// </summary>
         /// <param name="sessionName">Имя сессии.</param>
         public MeasureSession(string sessionName)
@@ -33,7 +36,7 @@ namespace MicroElements.Bootstrap.Utils
         /// </summary>
         public Measure[] Measures => _measures.ToArray();
 
-        class MeasureDisp : IDisposable
+        private class MeasureDisp : IDisposable
         {
             private string _name;
             private DateTime _startedTime;

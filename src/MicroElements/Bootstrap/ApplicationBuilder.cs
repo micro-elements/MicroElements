@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -82,7 +85,7 @@ namespace MicroElements.Bootstrap
                 if (_buildContext.Assemblies.Length > 20)
                 {
                     var assemblyScanPatterns = _buildContext.StartupConfiguration.AssemblyScanPatterns;
-                    var assemblyScanPatternsText = String.Join(",", assemblyScanPatterns);
+                    var assemblyScanPatternsText = string.Join(",", assemblyScanPatterns);
                     _buildContext.Logger.LogWarning($"Diagnostic: too many assemblies found. Specify AssemblyScanPatterns. Loaded: {_buildContext.Assemblies.Length} assemblies, AssemblyScanPatterns: {assemblyScanPatternsText}");
                 }
 

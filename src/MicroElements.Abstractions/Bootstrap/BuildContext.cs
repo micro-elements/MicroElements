@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +19,7 @@ namespace MicroElements.Bootstrap
         /// <summary>
         /// Параметры запуска приложения.
         /// </summary>
-        public StartupConfiguration StartupConfiguration;
+        public StartupConfiguration StartupConfiguration { get; set; }
 
         /// <summary>
         /// ServiceCollection. It can be passed from <see cref="StartupConfiguration"/> or created inside build process.
@@ -36,17 +39,17 @@ namespace MicroElements.Bootstrap
         /// <summary>
         /// Фабрика логирования.
         /// </summary>
-        public ILoggerFactory LoggerFactory = NullLoggerFactory.Instance;
+        public ILoggerFactory LoggerFactory { get; set; } = NullLoggerFactory.Instance;
 
         /// <summary>
         /// Основной логгер для процесса инициализации.
         /// </summary>
-        public ILogger Logger = NullLogger.Instance;
+        public ILogger Logger { get; set; } = NullLogger.Instance;
 
         /// <summary>
         /// Информация об окружении.
         /// </summary>
-        public StartupInfo StartupInfo;
+        public StartupInfo StartupInfo { get; set; }
 
         /// <summary>
         /// Loaded assemblies.
@@ -61,7 +64,7 @@ namespace MicroElements.Bootstrap
         /// <summary>
         /// Usefull information collected on build process. This information can be logged after build process finished.
         /// </summary>
-        public List<KeyValuePair<string, string>> BuildInfo = new List<KeyValuePair<string, string>>();
+        public List<KeyValuePair<string, string>> BuildInfo { get; set; } = new List<KeyValuePair<string, string>>();
 
         public void AddBuildInfo(string name, string value)
         {
@@ -101,6 +104,7 @@ namespace MicroElements.Bootstrap
             {
                 Logger.LogInformation("{0}      : {0}", pair.Key, pair.Key);
             }
+
             Logger.LogInformation("*************************************");
         }
     }

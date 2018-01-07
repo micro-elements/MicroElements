@@ -1,4 +1,7 @@
-﻿namespace MicroElements.Configuration
+﻿// Copyright (c) MicroElements. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace MicroElements.Configuration
 {
     /// <summary>
     /// Провайдер значения по-умолчанию для типа.
