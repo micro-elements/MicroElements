@@ -1,6 +1,6 @@
 ﻿# MicroElements
 
-![logo](image/logo.png "MicroElements Logo")
+![logo](image/logo_rounded.png "MicroElements Logo")
 
 MicroElements is component set for fast bootstraping your microservices.
 
@@ -14,6 +14,6 @@ MicroElements is component set for fast bootstraping your microservices.
 ### Packages
 |Package|Version|
 |--|--|
-|MicroComponents|[![NuGet](https://img.shields.io/nuget/v/MicroComponents.svg)](https://www.nuget.org/packages/MicroElements)|
-|MicroComponents.Bootstrap|[![NuGet](https://img.shields.io/nuget/v/MicroComponents.Bootstrap.svg)](https://www.nuget.org/packages/MicroElements)|
-|MicroComponents.DependencyInjection|[![NuGet](https://img.shields.io/nuget/v/MicroComponents.BooDependencyInjectiontstrap.svg)](https://www.nuget.org/packages/MicroElements)|
+|MicroElements|[![NuGet](https://img.shields.io/nuget/v/MicroElements.svg)](https://www.nuget.org/packages/MicroElements)|
+|MicroElements.Abstractions|[![NuGet](https://img.shields.io/nuget/v/MicroElements.Abstractions.svg)](https://www.nuget.org/packages/MicroElements)|
+|MicroElements.DependencyInjection|[![NuGet](https://img.shields.io/nuget/v/MicroElements.DependencyInjection.svg)](https://www.nuget.org/packages/MicroElements)|
