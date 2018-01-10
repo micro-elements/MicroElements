@@ -76,7 +76,10 @@ Task("Build")
 	var settings = new DotNetCoreBuildSettings 
     { 
         Configuration = configuration,
-        ArgumentCustomization = args => args.Append("/p:NugetVersion=" + nugetVersion)
+        ArgumentCustomization =
+          args => args
+            .Append("/p:NugetVersion=" + nugetVersion)
+            .Append("/p:SourceLinkCreate=true")
     };
 
 	DotNetCoreBuild(solutionFile, settings);
