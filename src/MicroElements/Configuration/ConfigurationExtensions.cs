@@ -42,6 +42,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         public static void DumpConfigurationToLog(this IConfiguration configuration, ILogger logger)
         {
             var keyValuePairs = configuration.GetAllValues();
+            //todo: make parameter
             bool IsPassword(string key) => key.Contains("Password");
 
             foreach (var keyValuePair in keyValuePairs)

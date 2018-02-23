@@ -43,7 +43,7 @@ namespace MicroElements.Bootstrap
         public IBuildContext Build(StartupConfiguration startupConfiguration)
         {
             _buildContext = new BuildContext { StartupConfiguration = startupConfiguration, };
-            var measureSession = new MeasureSession("Конфигурирование служб");
+            var measureSession = new MeasureSession("Application startup");
 
             // Разбор параметров командной строки
             startupConfiguration.BuildUpFromCommandLineArgs(startupConfiguration.CommandLineArgs.Args);
@@ -134,8 +134,6 @@ namespace MicroElements.Bootstrap
                 }
             }
 
-
-
             measureSession.LogMeasures(_buildContext.Logger);
 
             return _buildContext;
@@ -154,8 +152,8 @@ namespace MicroElements.Bootstrap
         /// <returns>Провайдер к коллекции зарегистрированных сервисов.</returns>
         public IBuildContext Start(IBuildContext buildContext)
         {
-            _buildContext.Logger.LogInformation("Запуск служб");
-            var measureSession = new MeasureSession("Запуск служб");
+            _buildContext.Logger.LogInformation("Starting services");
+            var measureSession = new MeasureSession("Starting services");
             measureSession.ExecuteWithTimer("StartRunnables", () =>
             {
                 // Запуск сервисов.
@@ -197,7 +195,7 @@ namespace MicroElements.Bootstrap
             var modulesOptions = startupConfiguration.Modules;
             startupConfiguration.ConfigureModules(modulesOptions);
 
-            // Регистрируем модули.           
+            // Регистрируем модули.
             List<Type> moduleTypes = new List<Type>();
             if (modulesOptions.AutoDiscoverModules)
             {

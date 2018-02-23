@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace MicroElements.Bootstrap.Extensions.Configuration
@@ -61,7 +62,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         private static IServiceCollection RegisterConfigurationType(this IServiceCollection services, IConfigurationSection configurationSection, Type optionType, string profile)
         {
             // Заменяем реализацию фабрики опций на свою.
-            services.Add(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(OptionsFactory<>)));
+            services.TryAdd(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(OptionsFactory<>)));
 
             // Добавляем поддержку IOptions, IOptionsSnapshot, IOptionsMonitor
             services.AddOptions();
@@ -78,7 +79,16 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
                 services.Configure(configurationSection, optionType, name);
 
             // Регистрация строготипизированных конфигов, чтобы можно было инжектить без IOptions и т.п.
-            services.AddSingleton(optionType, cfg => GetOptionsSnapshotValue(cfg, optionType, name));
+            services.AddSingleton(optionType, provider => GetOptionsSnapshotValue(provider, optionType, name));
+
+            var interfaces = optionType.GetInterfaces();
+            if (interfaces?.Length > 0)
+            {
+                foreach (var configurationInterface in interfaces)
+                {
+                    services.AddSingleton(configurationInterface, provider => GetOptionsSnapshotValue(provider, optionType, name));
+                }
+            }
 
             return services;
         }
@@ -99,10 +109,11 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
             configureMethodInfo.Invoke(null, new object[] { services, name, configurationSection });
         }
 
-        private static object GetOptionsSnapshotValue(IServiceProvider cfg, Type configurationType, string name)
+        private static object GetOptionsSnapshotValue(IServiceProvider provider, Type configurationType, string name)
         {
+            // todo: expression
             var optionsSnapshotType = typeof(IOptionsSnapshot<>).MakeGenericType(configurationType);
-            var optionsSnapshot = cfg.GetService(optionsSnapshotType);
+            var optionsSnapshot = provider.GetService(optionsSnapshotType);
             var optionsSnapshotImplType = optionsSnapshot.GetType();
             var valueProperty = optionsSnapshotImplType.GetMethod(nameof(IOptionsSnapshot<object>.Get));
             var value = valueProperty.Invoke(optionsSnapshot, new object[] { name });

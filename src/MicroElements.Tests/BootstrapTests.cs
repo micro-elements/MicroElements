@@ -40,6 +40,23 @@ namespace MicroElements.Tests
             sampleOptions.ShouldBeWithDefaultValues();
         }
 
+        [Test]
+        public void GetConfigurationVariants()
+        {
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Bootstrap",
+                Profile = null
+            };
+            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+
+            var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<SampleOptions>>();
+            var options = serviceProvider.GetRequiredService<IOptions<SampleOptions>>();
+            var sampleOptionsAsInterface = serviceProvider.GetRequiredService<ISampleOptions>();
+            var sampleOptions = serviceProvider.GetRequiredService<SampleOptions>();
+            sampleOptions.ShouldBeWithDefaultValues();
+        }
+
         [Test(Description = "Чтение конфигурации с переопределением через профиль")]
         public void ReadTypedConfigurationWithProfile()
         {
@@ -375,7 +392,7 @@ namespace MicroElements.Tests
         }
     }
 
-    public class SampleOptions
+    public class SampleOptions : ISampleOptions
     {
         public string Value { get; set; }
 
@@ -384,6 +401,11 @@ namespace MicroElements.Tests
         public int? OptionalIntValue { get; set; }
 
         public string OptionalValue { get; set; }
+    }
+
+    public interface ISampleOptions
+    {
+
     }
 }
 
