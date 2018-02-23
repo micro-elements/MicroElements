@@ -11,31 +11,36 @@ using System.Text.RegularExpressions;
 namespace MicroElements.Bootstrap
 {
     /// <summary>
-    /// Утилиты для облегчения работы с Reflection.
+    /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ Reflection.
     /// </summary>
     public static class ReflectionUtils
     {
         /// <summary>
-        /// Загрузка сборок в память по маске.
+        /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
         /// </summary>
-        /// <param name="scanDirectory">Директория из которой нужно грузить сборки.</param>
-        /// <param name="assemblyScanPatterns">Маска поиска файлов.</param>
-        /// <returns>Список найденных сборок.</returns>
+        /// <param name="scanDirectory">пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.</param>
+        /// <param name="assemblyScanPatterns">пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.</param>
+        /// <returns>пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.</returns>
         public static IEnumerable<Assembly> LoadAssemblies(string scanDirectory, params string[] assemblyScanPatterns)
         {
             string WildcardToRegex(string pat) => "^" + Regex.Escape(pat).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
             bool FileNameMatchesPattern(string filename, string pattern) => Regex.IsMatch(Path.GetFileName(filename), WildcardToRegex(pattern));
 
+            var domainAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var resultFromAppDomain = domainAssemblies.Where(asm => assemblyScanPatterns.Any(pattern => FileNameMatchesPattern(asm.FullName, pattern)));
+            
             var assemblies = Directory.EnumerateFiles(scanDirectory, "*.dll", SearchOption.TopDirectoryOnly)
                 .Concat(Directory.EnumerateFiles(scanDirectory, "*.exe", SearchOption.TopDirectoryOnly))
                 .Where(filename => assemblyScanPatterns.Any(pattern => FileNameMatchesPattern(filename, pattern)))
-                .Select(Assembly.LoadFrom);
+                .Select(Assembly.LoadFrom)
+                .Union(resultFromAppDomain)
+                .Distinct();
 
             return assemblies;
         }
 
         /// <summary>
-        /// Получение информации об окружении.
+        /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
         /// </summary>
         /// <returns>StartupInfo.</returns>
         public static StartupInfo GetStartupInfo()
