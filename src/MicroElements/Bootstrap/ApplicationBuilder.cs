@@ -8,12 +8,15 @@ using System.Linq;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.Bootstrap.Extensions.Configuration;
 using MicroElements.Bootstrap.Utils;
+using MicroElements.Configuration;
+using MicroElements.Configuration.Evaluation;
 using MicroElements.DependencyInjection;
 using MicroElements.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace MicroElements.Bootstrap
 {
@@ -78,6 +81,7 @@ namespace MicroElements.Bootstrap
                 _buildContext.Assemblies = ReflectionUtils
                     .LoadAssemblies(_buildContext.StartupInfo.BaseDirectory, _buildContext.StartupConfiguration.AssemblyScanPatterns)
                     .Concat(new[] { typeof(ApplicationBuilder).Assembly })
+                    .Distinct()
                     .ToArray();
 
                 _buildContext.Logger.LogDebug($"Loaded {_buildContext.Assemblies.Length} assemblies");
@@ -98,17 +102,11 @@ namespace MicroElements.Bootstrap
             using (measureSession.StartTimer("LoadConfiguration"))
             {
                 // Загрузка конфигурации
-                new LoadConfiguration().Execute(_buildContext);
+                ConfigurationReader.LoadConfiguration(_buildContext);
 
                 // Регистрируем конфигурацию в виде IConfiguration и IConfigurationRoot
                 serviceCollection.Replace(ServiceDescriptor.Singleton<IConfiguration>(_buildContext.ConfigurationRoot));
                 serviceCollection.Replace(ServiceDescriptor.Singleton<IConfigurationRoot>(_buildContext.ConfigurationRoot));
-
-                // Dump значений конфигурации в лог
-                if (startupConfiguration.DumpConfigurationToLog)
-                {
-                    _buildContext.ConfigurationRoot.DumpConfigurationToLog(_buildContext.LoggerFactory);
-                }
             }
 
             using (measureSession.StartTimer("ConfigureServices"))
@@ -132,6 +130,12 @@ namespace MicroElements.Bootstrap
                     _buildContext.Logger.LogError(new EventId(0), exception, exception.Message);
                     throw;
                 }
+            }
+
+            // Dump значений конфигурации в лог
+            if (startupConfiguration.DumpConfigurationToLog)
+            {
+                _buildContext.ConfigurationRoot.DumpConfigurationToLog(_buildContext.LoggerFactory);
             }
 
             measureSession.LogMeasures(_buildContext.Logger);
@@ -179,11 +183,17 @@ namespace MicroElements.Bootstrap
             var configurationRoot = buildContext.ConfigurationRoot;
             var services = buildContext.ServiceCollection;
 
+            // Заменяем реализацию фабрики опций на свою.
+            services.Add(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Configuration.OptionsFactory<>)));
+
+            // Добавляем поддержку IOptions, IOptionsSnapshot, IOptionsMonitor
+            services.AddOptions();
+
             // Logging
             services.RegisterLogging(loggerFactory);
 
             // Регистрируем строготипизированные конфигурации.
-            services.RegisterConfigurationTypes(configurationRoot, buildContext.ExportedTypes, startupConfiguration.Profile);
+            services.RegisterConfigurationTypes(configurationRoot, buildContext.ExportedTypes, startupConfiguration);
 
             // Регистрируем типы по атрибуту [Register]
             services.RegisterWithRegisterAttribute(buildContext.ExportedTypes);

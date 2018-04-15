@@ -4,7 +4,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
+namespace MicroElements.Configuration.Evaluation
 {
     /// <summary>
     /// Провайдер конфигурации для препроцессинга конфигурации.

@@ -6,7 +6,7 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration
+namespace MicroElements.Configuration
 {
     /// <summary>
     /// Extensions for <see cref="IConfiguration"/>.

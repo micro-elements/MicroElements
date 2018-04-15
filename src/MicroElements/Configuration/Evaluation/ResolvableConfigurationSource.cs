@@ -5,11 +5,11 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
+namespace MicroElements.Configuration.Evaluation
 {
     public class ResolvableConfigurationSource<T> : IConfigurationSource where T : IConfigurationSource
     {
-        private IServiceProvider _serviceProvider;
+        private readonly IServiceProvider _serviceProvider;
 
         public ResolvableConfigurationSource(IServiceProvider serviceProvider)
         {

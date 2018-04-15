@@ -2,13 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using MicroElements.Bootstrap;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration
+namespace MicroElements.Configuration
 {
     /// <summary>
     /// Методы для регистриции конфигурации.
@@ -23,27 +25,38 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         /// <param name="services">IServiceCollection.</param>
         /// <param name="configurationRoot">Конфигурация.</param>
         /// <param name="allTypes">Список всех загруженных типов.</param>
-        /// <param name="profile">Профиль конфигурации.</param>
-        /// <returns>ContainerBuilder для поддержки комбинирования вызовов.</returns>
-        public static IServiceCollection RegisterConfigurationTypes(this IServiceCollection services, IConfigurationRoot configurationRoot, Type[] allTypes, string profile)
+        /// <param name="startupConfiguration">StartupConfiguration.</param>
+        /// <returns>IServiceCollection для поддержки комбинирования вызовов.</returns>
+        public static IServiceCollection RegisterConfigurationTypes(this IServiceCollection services, IConfigurationRoot configurationRoot, Type[] allTypes, StartupConfiguration startupConfiguration)
+        {
+            var configurationTypes = GetConfigurationTypes(allTypes, startupConfiguration);
+            configurationTypes.ForEach(type => RegisterConfigurationType(services, configurationRoot, type, startupConfiguration.Profile));
+
+            return services;
+        }
+
+        public static List<Type> GetConfigurationTypes(Type[] allTypes, StartupConfiguration startupConfiguration)
         {
             var configurationTypes = allTypes
                 .Where(t => GetConfigurationSuffixes().Any(suffix => t.Name.EndsWith(suffix)))
+                .Where(type => !type.IsAbstract)
+                .Concat(startupConfiguration.ConfigurationTypes ?? Array.Empty<Type>())
                 .ToList();
-            configurationTypes.ForEach(type => RegisterConfigurationType(services, configurationRoot, type, profile));
-
-            return services;
+            return configurationTypes;
         }
 
         private static void RegisterConfigurationType(IServiceCollection services, IConfigurationRoot configurationRoot, Type optionType, string profile)
         {
             // Получаем конфигурационную секцию с нужным именем.
-            IConfigurationSection configurationSection = GetConfigurationSection(configurationRoot, optionType);
-            if (configurationSection == null)
-                return;
-
-            // Регистрация строготипизированного конфига.
-            services.RegisterConfigurationType(configurationSection, optionType, profile);
+            IConfigurationSection[] configurationSections = GetConfigurationSection(configurationRoot, optionType);
+            if (configurationSections != null)
+            {
+                foreach (var configurationSection in configurationSections)
+                {
+                    // Регистрация строготипизированного конфига.
+                    services.RegisterConfigurationType(configurationSection, optionType, profile);
+                }
+            }
         }
 
         /// <summary>
@@ -61,17 +74,15 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         /// <returns>IServiceCollection.</returns>
         private static IServiceCollection RegisterConfigurationType(this IServiceCollection services, IConfigurationSection configurationSection, Type optionType, string profile)
         {
-            // Заменяем реализацию фабрики опций на свою.
-            services.TryAdd(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(OptionsFactory<>)));
-
-            // Добавляем поддержку IOptions, IOptionsSnapshot, IOptionsMonitor
-            services.AddOptions();
-
             // Получим родителя, если есть
             var parent = configurationSection.GetValue<string>("${parent}", null);
 
             // Имя набора свойств (что-то типа профиля внутри конфигурации)
             var name = parent ?? profile ?? Options.DefaultName;
+            if (configurationSection.Path.StartsWith("$objects"))
+            {
+                name = configurationSection.Key;
+            }
 
             // Здесь аналог вызова через Reflection: services.Configure<TOptions>(name, configurationSection);
             services.Configure(configurationSection, optionType, Options.DefaultName);
@@ -120,7 +131,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
             return value;
         }
 
-        private static IConfigurationSection GetConfigurationSection(IConfigurationRoot configurationRoot, Type configurationType)
+        private static IConfigurationSection[] GetConfigurationSection(IConfigurationRoot configurationRoot, Type configurationType)
         {
             var configurationTypeName = configurationType.Name;
 
@@ -129,22 +140,41 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
             var nameSuffix = suffixes.FirstOrDefault(suf => configurationTypeName.EndsWith(suf)) ?? string.Empty;
             var name = configurationTypeName.Substring(0, configurationTypeName.Length - nameSuffix.Length);
 
-            Func<IConfigurationSection, bool> hasConfigurationValues = conf => conf.Value != null || conf.GetChildren().Any();
-
             // Проверяем различные варианты написания секции и расположения
-            var configurationSection = configurationRoot.GetSection($"Configuration:{name}");
-            if (hasConfigurationValues(configurationSection))
-                return configurationSection;
-
-            configurationSection = configurationRoot.GetSection($"Configuration:{name}{nameSuffix}");
-            if (hasConfigurationValues(configurationSection))
-                return configurationSection;
+            IConfigurationSection configurationSection;
 
             configurationSection = configurationRoot.GetSection($"{name}{nameSuffix}");
-            if (hasConfigurationValues(configurationSection))
-                return configurationSection;
+            if (HasConfigurationValues(configurationSection))
+                return new[] { configurationSection };
+
+            configurationSection = configurationRoot.GetSection($"Configuration:{name}{nameSuffix}");
+            if (HasConfigurationValues(configurationSection))
+                return new[] { configurationSection };
+
+            configurationSection = configurationRoot.GetSection($"Configuration:{name}");
+            if (HasConfigurationValues(configurationSection))
+                return new[] { configurationSection };
+
+            var typedSection = configurationRoot.GetSection($"$objects:{name}");
+            var sections = typedSection.GetChildren().ToList();
+            if (sections.Count > 0)
+            {
+                return sections.ToArray();
+            }
 
             return null;
+        }
+
+        private static bool HasConfigurationValues(IConfigurationSection section)
+        {
+            if (section.Key == "ComplexObject")
+            {
+                int i = 0;
+            }
+
+            var children = section.GetChildren();
+            var keys = children.Select(configurationSection => configurationSection.Key);
+            return section.Value != null || children.Any();
         }
     }
 }

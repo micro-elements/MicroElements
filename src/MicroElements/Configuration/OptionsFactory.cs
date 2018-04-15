@@ -3,11 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using MicroElements.Configuration;
 using MicroElements.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration
+namespace MicroElements.Configuration
 {
     /// <summary>
     /// Фабрика опций с поддержкой <see cref="IDefaultValueProvider{T}"/>
@@ -18,6 +17,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         where TOptions : class, new()
     {
         private readonly IEnumerable<IConfigureOptions<TOptions>> _setups;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IKeyedServiceCollection<string, IDefaultValueProvider<TOptions>> _defaultValueProviders;
 
         /// <summary>
@@ -27,15 +27,24 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         /// <param name="defaultValueProviders">Провайдер значения по-умолчанию для типа.</param>
         public OptionsFactory(
             IEnumerable<IConfigureOptions<TOptions>> setups,
+            IServiceProvider serviceProvider,
             IKeyedServiceCollection<string, IDefaultValueProvider<TOptions>> defaultValueProviders = null)
         {
             _setups = setups;
+            _serviceProvider = serviceProvider;
             _defaultValueProviders = defaultValueProviders;
         }
 
         /// <inheritdoc />
         public TOptions Create(string name)
         {
+            if (typeof(TOptions).Name == "ComplexObject")
+            {
+                var type = Type.GetType("MicroElements.Tests.Model.InnerObject, MicroElements.Tests");
+                var enumerableType = typeof(IEnumerable<>).MakeGenericType(type);
+                var service = _serviceProvider.GetService(enumerableType);
+            }
+
             IDefaultValueProvider<TOptions> defaultValueProvider = null; //_defaultValueProviders.GetService(null, name);//todo: IDefaultValueProvider
             TOptions instance = defaultValueProvider != null ? defaultValueProvider.GetDefault() : Activator.CreateInstance<TOptions>();
             foreach (IConfigureOptions<TOptions> setup in _setups)

@@ -3,7 +3,7 @@
 
 using System;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
+namespace MicroElements.Configuration.Evaluation
 {
     /// <summary>
     /// Вычисление выражений вида ${environment:envVarName}.

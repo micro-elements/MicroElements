@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration
+namespace MicroElements.Configuration
 {
     public static class CommandLineExtensions
     {

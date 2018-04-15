@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
+namespace MicroElements.Configuration.Evaluation
 {
     /// <summary>
     /// Провайдер конфигурации для вычисления динамических и подстановочных значений (placeholders).
@@ -18,7 +18,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
         /// Initializes a new instance of the <see cref="PlaceholdersConfigurationSource"/> class.
         /// </summary>
         /// <param name="configurationRoot">Корень конфигурации.</param>
-        /// <param name="evaluators"></param>
+        /// <param name="evaluators">Вычислители значений.</param>
         public PlaceholdersConfigurationSource(IConfigurationRoot configurationRoot, IEnumerable<IValueEvaluator> evaluators)
         {
             _configurationRoot = configurationRoot;

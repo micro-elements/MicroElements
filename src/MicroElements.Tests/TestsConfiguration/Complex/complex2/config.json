@@ -1,0 +1,16 @@
+﻿{
+    "ComplexObject": {
+        "Name": "Complex",
+        "Inner": { "$ref": "#/objects/InnerObject:First" }
+    },
+    "objects": {
+        "InnerObject:First": {
+            "Name": "First",
+            "Value": "InnerValue"
+        },
+        "InnerObject:Second": {
+            "Name": "Second",
+            "Value": "InnerValue2"
+        }
+    }
+}

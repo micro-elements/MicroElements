@@ -2,14 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using MicroElements.Bootstrap.Extensions.Configuration.Evaluation;
+using System.Linq;
+using MicroElements.Bootstrap;
+using MicroElements.Bootstrap.Extensions;
+using MicroElements.Configuration.Evaluation;
+using MicroElements.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration
+namespace MicroElements.Configuration
 {
     /// <summary>
     /// Расширения для <see cref="Microsoft.Extensions.Configuration"/>.
@@ -20,7 +23,6 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
         /// Загрузка конфигурации.
         /// </summary>
         /// <param name="buildContext">Контекст построения приложения.</param>
-        /// <returns>Инициализированная конфигурация.</returns>
         public static void LoadConfiguration(BuildContext buildContext)
         {
             var startupConfiguration = buildContext.StartupConfiguration;
@@ -52,6 +54,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
             // Делаем копию ServiceCollection, чтобы не портить временной регистрацией.
             IServiceCollection serviceCollectionCopy = buildContext.ServiceCollection.Copy();
             serviceCollectionCopy.AddSingleton(configurationRoot);
+            serviceCollectionCopy.AddSingletons<IValueEvaluator>(buildContext.ExportedTypes);
 
             var serviceProvider = serviceCollectionCopy.BuildServiceProvider();
             var valueEvaluators = serviceProvider.GetServices<IValueEvaluator>();
@@ -61,6 +64,29 @@ namespace MicroElements.Bootstrap.Extensions.Configuration
 
             // Повторное построение, чтобы рассчитать вычисляемые значения
             buildContext.ConfigurationRoot = builder.Build();
+
+            var values = buildContext.ConfigurationRoot.GetAllValues();
+            var valuesWithRefs = values.Where(pair => pair.Value?.StartsWith("${ref:") ?? false).ToList();
+            if (valuesWithRefs.Count > 0)
+            {
+                var configurationTypes = ConfigurationRegistration.GetConfigurationTypes(buildContext.ExportedTypes, startupConfiguration);
+
+                foreach (var valuesWithRef in valuesWithRefs)
+                {
+                    string optionPropertyName = valuesWithRef.Key.Split(':').Last();
+                    var typeName = valuesWithRef.Key.Split(':').First();
+                    Type refObjectType = configurationTypes.FirstOrDefault(type => type.Name == typeName);
+                    string refObjectName = valuesWithRef.Value.Substring(6, valuesWithRef.Value.Length - 6 - 1).Split(':').Last();
+
+                    /*
+                     * services.AddSingleton<IConfigureOptions<ComplexObject>>(
+                           provider => new ConfigureRefProperty<ComplexObject>(provider, "Inner", typeof(InnerObject), "Second"));
+                     */
+
+                    var services = buildContext.ServiceCollection;
+
+                }
+            }
         }
 
         /// <summary>

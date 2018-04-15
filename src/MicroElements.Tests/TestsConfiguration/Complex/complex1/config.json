@@ -1,0 +1,9 @@
+﻿{
+    "ComplexObject": {
+        "Name": "Complex",
+        "Inner": {
+            "Name": "InnerName",
+            "Value": "InnerValue"
+        }
+    }
+}

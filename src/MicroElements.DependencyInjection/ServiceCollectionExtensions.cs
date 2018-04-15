@@ -26,7 +26,7 @@ namespace MicroElements.DependencyInjection
         {
             assembly
                 .GetDefinedTypesSafe()
-                .Select(type => new {Type = type, ServiceType = typeToServiceType(type)})
+                .Select(type => new { Type = type, ServiceType = typeToServiceType(type) })
                 .Where(a => a.ServiceType != null)
                 .Iter(a => services.AddSingleton(a.ServiceType, a.Type));
 
@@ -37,7 +37,7 @@ namespace MicroElements.DependencyInjection
         {
             assembly
                 .GetDefinedTypesSafe()
-                .Select(type => new {Type = type, ServiceTypes = typeToServiceTypes(type)})
+                .Select(type => new { Type = type, ServiceTypes = typeToServiceTypes(type) })
                 .Where(a => a.ServiceTypes != null)
                 .Iter(a =>
                 {
@@ -50,9 +50,8 @@ namespace MicroElements.DependencyInjection
 
         public static IServiceCollection AddSingletons<TService>(this IServiceCollection services, IEnumerable<Type> types)
         {
-            types
-                .Where(type => type.IsClassAssignableTo<TService>())
-                .Iter(t => services.AddSingleton(typeof(TService), t));
+            var serviceTypes = types.Where(type => type.IsClassAssignableTo<TService>());
+            serviceTypes.Iter(t => services.AddSingleton(typeof(TService), t));
 
             return services;
         }
@@ -61,7 +60,7 @@ namespace MicroElements.DependencyInjection
         {
             return assembly
                 .GetDefinedTypesSafe()
-                .Select(type => new {ImplementationType = type, ServiceTypes = typeToServiceTypes(type)})
+                .Select(type => new { ImplementationType = type, ServiceTypes = typeToServiceTypes(type) })
                 .Where(a => a.ServiceTypes != null)
                 .SelectMany(a => a.ServiceTypes.Select(serviceType => new ServiceDescriptor(serviceType, a.ImplementationType, lifetime)));
         }

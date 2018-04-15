@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using FluentAssertions;
 using MicroElements.Bootstrap;
 using MicroElements.Configuration;
+using MicroElements.Tests.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 
 namespace MicroElements.Tests
@@ -340,48 +346,140 @@ namespace MicroElements.Tests
 
             testLoggerProvider.Log.Should().Contain("Diagnostic: too many assemblies found. Specify AssemblyScanPatterns.");
         }
-    }
 
-    public class TestModule1 : IModule
-    {
-        public void ConfigureServices(IServiceCollection services)
+        [Test]
+        public void Complex1()
         {
-            services.AddSingleton<TestModule1Service>();
+            /*
+            {
+                "ComplexObjectConfiguration": {
+                    "Name": "Complex",
+                    "Inner": {
+                        "Name": "InnerName",
+                        "Value": "InnerValue"
+                    }
+                }
+            }
+            */
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Complex/complex1",
+                ConfigurationTypes = new[] { typeof(ComplexObject) }
+            };
+            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+
+            var complexObject = serviceProvider.GetRequiredService<ComplexObject>();
+            complexObject.Should().NotBeNull();
+            complexObject.Name.Should().Be("Complex");
+            complexObject.Inner.Should().NotBeNull();
+
+            complexObject.Inner.Name.Should().Be("InnerName");
+            complexObject.Inner.Value.Should().Be("InnerValue");
+        }
+
+        [Test]
+        public void ComplexWithRef()
+        {
+            /*
+            {
+                "ComplexObject": {
+                    "Name": "Complex",
+                    "Inner": "${ref:InnerObject:First}"
+                },
+                "$objects": {
+                    "InnerObject:First": {
+                        "Name": "First",
+                        "Value": "InnerValue"
+                    },
+                    "InnerObject:Second": {
+                        "Name": "Second",
+                        "Value": "InnerValue2"
+                    }
+                }
+            }
+            */
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Complex/complex2",
+                ConfigurationTypes = new[] { typeof(ComplexObject), typeof(InnerObject) },
+                ServiceCollection = new ServiceCollection()
+            };
+
+            var readAllText = File.ReadAllText("TestsConfiguration/Complex/complex2/config.json");
+            var jsonSerializerSettings = new JsonSerializerSettings()
+            {
+                ReferenceResolverProvider = () => new ReferenceResolver(readAllText)
+            };
+            var deserializeObject = JsonConvert.DeserializeObject<ComplexObjectContainer>(readAllText, jsonSerializerSettings);
+
+            startupOptions.ServiceCollection.AddSingleton<IConfigureOptions<ComplexObject>>(
+                provider => new ConfigureRefProperty<ComplexObject>(provider, "Inner", typeof(InnerObject), "Second"));
+
+            var serviceProvider = new ApplicationBuilder().Build(startupOptions);
+
+            var innerObject = serviceProvider.GetService<IEnumerable<InnerObject>>();
+            var complexObject = serviceProvider.GetRequiredService<ComplexObject>();
+            complexObject.Should().NotBeNull();
+            complexObject.Name.Should().Be("Complex");
+            complexObject.Inner.Should().NotBeNull();
+
+            complexObject.Inner.Name.Should().Be("InnerName");
+            complexObject.Inner.Value.Should().Be("InnerValue");
+        }
+
+        class ReferenceResolver : IReferenceResolver
+        {
+            JObject _jObject;
+            public ReferenceResolver(string text)
+            {
+                _jObject = (JObject)JsonConvert.DeserializeObject(text);
+            }
+
+            /// <inheritdoc />
+            public object ResolveReference(object context, string reference)
+            {
+                //JsonSerializerInternalReader
+                var token = _jObject.SelectToken("objects").SelectToken("InnerObject:First");
+                var deserializeObject = JsonConvert.DeserializeObject(token.ToString(), typeof(InnerObject));
+                return deserializeObject;
+                return new InnerObject() { Name = "aa", Value = "aa" };
+            }
+
+            /// <inheritdoc />
+            public string GetReference(object context, object value)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <inheritdoc />
+            public bool IsReferenced(object context, object value)
+            {
+                throw new NotImplementedException();
+            }
+
+            /// <inheritdoc />
+            public void AddReference(object context, string reference, object value)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        [Test]
+        public void RegisterMultipleObjects()
+        {
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Array",
+                Profile = null
+            };
+            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+
+            var options = serviceProvider.GetRequiredService<IEnumerable<SampleOptions>>().ToArray();
+            options.Length.Should().Be(2);
         }
     }
 
-    public class TestModule1Service
-    {
-    }
 
-    public class TestModule2 : IModule
-    {
-        private readonly TestModule2Configuration _configuration;
-
-        public TestModule2(TestModule2Configuration configuration)
-        {
-            _configuration = configuration;
-        }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddSingleton(new TestModule2Service(_configuration.ConfigurationValue));
-        }
-    }
-    public class TestModule2Configuration
-    {
-        public string ConfigurationValue { get; set; }
-    }
-
-    public class TestModule2Service
-    {
-        public string ConfigurationValue { get; }
-
-        public TestModule2Service(string configurationValue)
-        {
-            ConfigurationValue = configurationValue;
-        }
-    }
 
     public static class AssertExtensions
     {
@@ -390,22 +488,6 @@ namespace MicroElements.Tests
             sampleOptions.Value.Should().BeEquivalentTo("DefaultValue");
             sampleOptions.SharedValue.Should().BeEquivalentTo("SharedValue");
         }
-    }
-
-    public class SampleOptions : ISampleOptions
-    {
-        public string Value { get; set; }
-
-        public string SharedValue { get; set; }
-
-        public int? OptionalIntValue { get; set; }
-
-        public string OptionalValue { get; set; }
-    }
-
-    public interface ISampleOptions
-    {
-
     }
 }
 

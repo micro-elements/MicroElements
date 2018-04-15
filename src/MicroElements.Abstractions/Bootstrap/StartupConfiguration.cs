@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using MicroElements.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,11 @@ namespace MicroElements.Bootstrap
         /// Если путь задан, то будет считана конфигурация из этой папки.
         /// </summary>
         public string ConfigurationPath { get; set; }
+
+        /// <summary>
+        /// Additional configuration types to search sections in configuration.
+        /// </summary>
+        public Type[] ConfigurationTypes { get; set; } = Array.Empty<Type>();
 
         /// <summary>
         /// Configuration profile.

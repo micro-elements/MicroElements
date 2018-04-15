@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
+namespace MicroElements.Configuration.Evaluation
 {
     /// <summary>
     /// Провайдер конфигурации для вычисления динамических и подстановочных значений (placeholders).
@@ -15,7 +15,6 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
     {
         private readonly IConfigurationRoot _configurationRoot;
         private readonly IEnumerable<IValueEvaluator> _evaluators;
-        private readonly Dictionary<string, IValueEvaluator> _evaluators2 = new Dictionary<string, IValueEvaluator>();
         private readonly Dictionary<string, string> _propertiesWithPlaceholders;
 
         /// <summary>
@@ -27,16 +26,7 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
         {
             _configurationRoot = configurationRoot;
             _evaluators = evaluators;
-            foreach (var evaluator in _evaluators)
-            {
-                _evaluators2[evaluator.Name] = evaluator;
-            }
             _propertiesWithPlaceholders = GetPropertiesWithPlaceholders(configurationRoot);
-        }
-
-        private static string GetEvaluatorTag(IValueEvaluator evaluator)
-        {
-            return evaluator.Name;
         }
 
         /// <inheritdoc />
