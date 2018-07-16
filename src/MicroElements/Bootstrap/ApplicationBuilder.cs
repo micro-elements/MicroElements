@@ -48,6 +48,11 @@ namespace MicroElements.Bootstrap
             // Разбор параметров командной строки
             startupConfiguration.BuildUpFromCommandLineArgs(startupConfiguration.CommandLineArgs.Args);
 
+            Environment.SetEnvironmentVariable("LogsPath", startupConfiguration.LogsPath, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("ConfigurationPath", startupConfiguration.ConfigurationPath, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("Profile", startupConfiguration.Profile, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("InstanceId", startupConfiguration.InstanceId, EnvironmentVariableTarget.Process);
+
             // Can use defined service collection or create new
             _buildContext.ServiceCollection = startupConfiguration.ServiceCollection ?? new ServiceCollection();
             var serviceCollection = _buildContext.ServiceCollection;
