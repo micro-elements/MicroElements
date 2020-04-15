@@ -3,7 +3,7 @@
   
   <PropertyGroup>
     <Product>MicroElements</Product>
-    <Copyright>Alexey Petryashev 2018</Copyright>
+    <Copyright>Alexey Petryashev 2020</Copyright>
     <Authors>alexey.petriashev,MicroElements</Authors>
     <NoWarn>$(NoWarn);1701;1702;1705;CS1591;CS1570</NoWarn>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
