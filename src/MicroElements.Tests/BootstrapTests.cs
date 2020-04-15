@@ -181,7 +181,7 @@ namespace MicroElements.Tests
             };
 
             Action action = () => new ApplicationBuilder().Build(startupOptions);
-            action.ShouldNotThrow();
+            action.Should().NotThrow();
         }
         [Test]
         public void RegisterModules1()

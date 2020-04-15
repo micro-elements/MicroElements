@@ -54,24 +54,25 @@ namespace MicroElements.Configuration.Evaluation
                             {
                                 var placeholderValueStartIndex = tagIndex + placeholderTag.Length;
                                 string expressionValue = valueWithPlaceholder.Substring(placeholderValueStartIndex, placeholderValueEndIndex - placeholderValueStartIndex);
-                                if (evaluator.TryEvaluate(expressionValue, out string evaluatedValue))
+
+                                string evaluatedValue = evaluator.Evaluate(expressionValue);
+                                evaluatedValue ??= string.Empty;
+
+                                if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
                                 {
-                                    if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
-                                    {
-                                        value = evaluatedValue;
-                                        return true;
-                                    }
-                                    var placeholder = valueWithPlaceholder.Substring(tagIndex, placeholderValueEndIndex - tagIndex + 1);
-                                    value = valueWithPlaceholder.Replace(placeholder, evaluatedValue);
-                                    valueWithPlaceholder = value;
-                                    break;
+                                    value = evaluatedValue;
+                                    return true;
                                 }
+
+                                var placeholder = valueWithPlaceholder.Substring(tagIndex, placeholderValueEndIndex - tagIndex + 1);
+                                value = valueWithPlaceholder.Replace(placeholder, evaluatedValue);
+                                valueWithPlaceholder = value;
+                                break;
                             }
                         }
                     }
                 }
 
-                value = string.Empty;
                 return true;
             }
 

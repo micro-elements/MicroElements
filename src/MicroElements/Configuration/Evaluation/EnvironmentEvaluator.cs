@@ -15,10 +15,9 @@ namespace MicroElements.Configuration.Evaluation
         public string Name => "environment";
 
         /// <inheritdoc />
-        public bool TryEvaluate(string expression, out string value)
+        public string Evaluate(string expression)
         {
-            value = Environment.GetEnvironmentVariable(expression);
-            return value != null;
+            return Environment.GetEnvironmentVariable(expression);
         }
     }
 }
