@@ -24,6 +24,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA2450BF-7CF3-42DA-B18D-A8D7811A227F}"
 	ProjectSection(SolutionItems) = preProject
 		.travis.yml = .travis.yml
+		build.cake = build.cake
+		build.sh = build.sh
 		cake.config = cake.config
 		CHANGELOG.md = CHANGELOG.md
 		README.md = README.md
