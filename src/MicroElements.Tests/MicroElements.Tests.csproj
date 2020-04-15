@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MicroElements\MicroElements.csproj" />
-    <ProjectReference Include="..\MicroElements.Abstractions\MicroElements.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
