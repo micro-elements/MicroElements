@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroElements", "src\MicroElements\MicroElements.csproj", "{D6894AB7-8160-42A4-8E59-C67D521DA133}"
 EndProject
@@ -23,7 +23,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{CA60
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EA2450BF-7CF3-42DA-B18D-A8D7811A227F}"
 	ProjectSection(SolutionItems) = preProject
+		.travis.yml = .travis.yml
 		cake.config = cake.config
+		CHANGELOG.md = CHANGELOG.md
+		README.md = README.md
+		version.props = version.props
 	EndProjectSection
 EndProject
 Global

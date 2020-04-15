@@ -70,6 +70,9 @@ namespace MicroElements.Configuration.Evaluation
                         }
                     }
                 }
+
+                value = string.Empty;
+                return true;
             }
 
             return value != null;

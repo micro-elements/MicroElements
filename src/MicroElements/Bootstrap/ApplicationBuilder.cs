@@ -6,10 +6,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MicroElements.Bootstrap.Extensions;
-using MicroElements.Bootstrap.Extensions.Configuration;
 using MicroElements.Bootstrap.Utils;
 using MicroElements.Configuration;
-using MicroElements.Configuration.Evaluation;
 using MicroElements.DependencyInjection;
 using MicroElements.Logging;
 using Microsoft.Extensions.Configuration;
@@ -49,7 +47,10 @@ namespace MicroElements.Bootstrap
             var measureSession = new MeasureSession("Application startup");
 
             // Разбор параметров командной строки
-            startupConfiguration.BuildUpFromCommandLineArgs(startupConfiguration.CommandLineArgs.Args);
+            if (startupConfiguration.SetPropertiesFromCommandLineArgs)
+            {
+                startupConfiguration.BuildUpFromCommandLineArgs(startupConfiguration.CommandLineArgs.Args);
+            }
 
             Environment.SetEnvironmentVariable("LogsPath", startupConfiguration.LogsPath, EnvironmentVariableTarget.Process);
             Environment.SetEnvironmentVariable("ConfigurationPath", startupConfiguration.ConfigurationPath, EnvironmentVariableTarget.Process);

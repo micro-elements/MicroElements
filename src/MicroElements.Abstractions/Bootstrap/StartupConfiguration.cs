@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using MicroElements.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +18,11 @@ namespace MicroElements.Bootstrap
         /// Параметры командной строки.
         /// </summary>
         public CommandLineArgs CommandLineArgs { get; set; } = CommandLineArgs.Null;
+
+        /// <summary>
+        /// Установить свойства из командной строки.
+        /// </summary>
+        public bool SetPropertiesFromCommandLineArgs { get; set; } = true;
 
         /// <summary>
         /// Путь к папке с конфигурациями (абсолютный или относительный).

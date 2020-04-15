@@ -304,6 +304,28 @@ namespace MicroElements.Tests
         }
 
         [Test]
+        public void placeholders_should_be_replaced_with_empty()
+        {
+            var startupOptions = new StartupConfiguration
+            {
+                BeginConfiguration = builder => builder.AddInMemoryCollection(new[]
+                {
+                    new KeyValuePair<string, string>("Configuration:Property", "Value"),
+                    new KeyValuePair<string, string>("Configuration:PropertyWithPlaceholder", "${configurationValue:Placeholders:Value}"),
+                }),
+                CommandLineArgs = new CommandLineArgs(new[] { "--Placeholders:OtherValue", "ValueFromPlaceholder" }),
+                //Not evaluated value should be null or empty string
+                //ReplaceNotEvaluatedValuesWith = ""
+            };
+            var serviceProvider = new ApplicationBuilder().Build(startupOptions).ServiceProvider;
+
+            var configuration = serviceProvider.GetService<IConfiguration>();
+            configuration.Should().NotBeNull();
+            configuration["Configuration:Property"].Should().Be("Value");
+            configuration["Configuration:PropertyWithPlaceholder"].Should().Be("");
+        }
+
+        [Test]
         [TestCase("${configurationValue:Placeholders:Value}", "ValueFromPlaceholder", TestName = "simple_placeholder")]
         [TestCase("${configurationValue:Placeholders.Value}", "ValueFromPlaceholder", TestName = "simple_placeholder_with_dot")]
         [TestCase("${configurationValue:Placeholders:Value} end", "ValueFromPlaceholder end", TestName = "placeholder_in_start_of_text")]
