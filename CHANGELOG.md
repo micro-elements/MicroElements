@@ -1,3 +1,6 @@
+# 1.3.0
+- Recursive evaluations
+
 # 1.2.0
 - Property evaluation fixed
 - IPropertyEvaluator interface changed

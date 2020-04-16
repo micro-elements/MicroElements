@@ -65,18 +65,26 @@ namespace MicroElements.Configuration
             // Повторное построение, чтобы рассчитать вычисляемые значения
             buildContext.ConfigurationRoot = builder.Build();
 
+            if (startupConfiguration.ProcessRefs)
+                ProcessRefs(buildContext, startupConfiguration);
+        }
+
+        private static void ProcessRefs(BuildContext buildContext, StartupConfiguration startupConfiguration)
+        {
             var values = buildContext.ConfigurationRoot.GetAllValues();
             var valuesWithRefs = values.Where(pair => pair.Value?.StartsWith("${ref:") ?? false).ToList();
             if (valuesWithRefs.Count > 0)
             {
-                var configurationTypes = ConfigurationRegistration.GetConfigurationTypes(buildContext.ExportedTypes, startupConfiguration);
+                var configurationTypes =
+                    ConfigurationRegistration.GetConfigurationTypes(buildContext.ExportedTypes, startupConfiguration);
 
                 foreach (var valuesWithRef in valuesWithRefs)
                 {
                     string optionPropertyName = valuesWithRef.Key.Split(':').Last();
                     var typeName = valuesWithRef.Key.Split(':').First();
                     Type refObjectType = configurationTypes.FirstOrDefault(type => type.Name == typeName);
-                    string refObjectName = valuesWithRef.Value.Substring(6, valuesWithRef.Value.Length - 6 - 1).Split(':').Last();
+                    string refObjectName =
+                        valuesWithRef.Value.Substring(6, valuesWithRef.Value.Length - 6 - 1).Split(':').Last();
 
                     /*
                      * services.AddSingleton<IConfigureOptions<ComplexObject>>(
@@ -84,7 +92,6 @@ namespace MicroElements.Configuration
                      */
 
                     var services = buildContext.ServiceCollection;
-
                 }
             }
         }

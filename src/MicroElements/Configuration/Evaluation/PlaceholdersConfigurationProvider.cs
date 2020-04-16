@@ -14,7 +14,7 @@ namespace MicroElements.Configuration.Evaluation
     public class PlaceholdersConfigurationProvider : ConfigurationProvider
     {
         private readonly IConfigurationRoot _configurationRoot;
-        private readonly IEnumerable<IValueEvaluator> _evaluators;
+        private readonly IReadOnlyCollection<IValueEvaluator> _evaluators;
         private readonly Dictionary<string, string> _propertiesWithPlaceholders;
 
         /// <summary>
@@ -25,15 +25,33 @@ namespace MicroElements.Configuration.Evaluation
         public PlaceholdersConfigurationProvider(IConfigurationRoot configurationRoot, IEnumerable<IValueEvaluator> evaluators)
         {
             _configurationRoot = configurationRoot;
-            _evaluators = evaluators;
+            _evaluators = evaluators.ToArray();
             _propertiesWithPlaceholders = GetPropertiesWithPlaceholders(configurationRoot);
         }
 
         /// <inheritdoc />
         public override bool TryGet(string key, out string value)
         {
-            value = null;
-            _propertiesWithPlaceholders.TryGetValue(key, out string valueWithPlaceholderOriginal);
+            _propertiesWithPlaceholders.TryGetValue(key, out string valueWithPlaceholder);
+
+            return SimpleExpressionParser.TryParseAndRender(valueWithPlaceholder, _evaluators, out value);
+        }
+
+        private Dictionary<string, string> GetPropertiesWithPlaceholders(IConfigurationRoot configurationRoot)
+        {
+            return configurationRoot
+                .GetAllValues()
+                .Where(pair => pair.Value != null && pair.Value.HasPlaceholderFor(_evaluators))
+                .ToDictionary(pair => pair.Key, pair => pair.Value);
+        }
+    }
+
+    public static class SimpleExpressionParser
+    {
+        public static bool HasPlaceholderFor(this string value, IReadOnlyCollection<IValueEvaluator> evaluators) => evaluators.Any(evaluator => value.Contains(evaluator.PlaceholderTag()));
+
+        public static bool TryParseAndRender(string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators, out string value)
+        {
             if (valueWithPlaceholderOriginal != null)
             {
                 var valueWithPlaceholder = valueWithPlaceholderOriginal;
@@ -42,61 +60,62 @@ namespace MicroElements.Configuration.Evaluation
                 while (placeholderValueEndIndex >= 0 && valueWithPlaceholderPrev != valueWithPlaceholder)
                 {
                     valueWithPlaceholderPrev = valueWithPlaceholder;
-                    foreach (var evaluator in _evaluators)
+
+                    foreach (var evaluator in evaluators)
                     {
-                        var evaluatorName = evaluator.Name;
-                        var placeholderTag = $"${{{evaluatorName}:";
-                        if (valueWithPlaceholder.Contains(placeholderTag))
+                        string placeholderTag = evaluator.PlaceholderTag();
+
+                        int startIndex = 0;
+                        int tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, startIndex, StringComparison.InvariantCultureIgnoreCase);
+
+                        while (tagIndex >= 0)
                         {
-                            int tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, StringComparison.InvariantCultureIgnoreCase);
                             placeholderValueEndIndex = valueWithPlaceholder.IndexOf('}', tagIndex);
                             if (placeholderValueEndIndex > 0)
                             {
                                 var placeholderValueStartIndex = tagIndex + placeholderTag.Length;
                                 string expressionValue = valueWithPlaceholder.Substring(placeholderValueStartIndex, placeholderValueEndIndex - placeholderValueStartIndex);
 
-                                string evaluatedValue = evaluator.Evaluate(expressionValue);
-                                evaluatedValue ??= string.Empty;
-
-                                if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
+                                if (!expressionValue.HasPlaceholderFor(evaluators))
                                 {
-                                    value = evaluatedValue;
-                                    return true;
-                                }
+                                    string evaluatedValue = evaluator.Evaluate(expressionValue);
+                                    evaluatedValue ??= string.Empty;
 
-                                var placeholder = valueWithPlaceholder.Substring(tagIndex, placeholderValueEndIndex - tagIndex + 1);
-                                value = valueWithPlaceholder.Replace(placeholder, evaluatedValue);
-                                valueWithPlaceholder = value;
-                                break;
+                                    if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
+                                    {
+                                        value = evaluatedValue;
+                                        return true;
+                                    }
+
+                                    var placeholder = valueWithPlaceholder.Substring(tagIndex, placeholderValueEndIndex - tagIndex + 1);
+                                    valueWithPlaceholder = valueWithPlaceholder.Replace(placeholder, evaluatedValue);
+                                    break;
+                                }
+                                else
+                                {
+                                    // will try to find next token with the same tag
+                                    startIndex = startIndex + 1;
+                                    tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, startIndex, StringComparison.InvariantCultureIgnoreCase);
+                                }
                             }
                         }
                     }
                 }
 
+                value = valueWithPlaceholder;
                 return true;
             }
 
-            return value != null;
+            value = null;
+            return false;
         }
 
-        private static bool HasPlaceholder(string value, object tag)
-        {
-            return value.Contains($"${{{tag}:");
-        }
+        public static string PlaceholderTag(this IValueEvaluator evaluator) => $"${{{evaluator.Name}:";
 
-        private static bool HasPlaceholder(string value, IEnumerable<object> tags)
+        public static string ParseAndRender(string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators)
         {
-            return tags.Any(tag => HasPlaceholder(value, tag));
-        }
-
-        private Dictionary<string, string> GetPropertiesWithPlaceholders(IConfigurationRoot configurationRoot)
-        {
-            var evaluatorTags = _evaluators.Select(evaluator => evaluator.Name).ToArray();
-
-            return configurationRoot
-                .GetAllValues()
-                .Where(pair => pair.Value != null && HasPlaceholder(pair.Value, evaluatorTags))
-                .ToDictionary(pair => pair.Key, pair => pair.Value);
+            TryParseAndRender(valueWithPlaceholderOriginal, evaluators, out string value);
+            return value;
         }
     }
 }

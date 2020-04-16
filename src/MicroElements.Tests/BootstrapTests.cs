@@ -5,6 +5,7 @@ using System.Linq;
 using FluentAssertions;
 using MicroElements.Bootstrap;
 using MicroElements.Configuration;
+using MicroElements.Configuration.Evaluation;
 using MicroElements.Tests.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -350,6 +351,60 @@ namespace MicroElements.Tests
             configuration["Configuration:PropertyWithPlaceholder"].Should().Be(resultValue);
         }
 
+        class DictionaryEvaluator : IValueEvaluator
+        {
+            private readonly IDictionary<string, string> _propertyValues;
+
+            public DictionaryEvaluator()
+            {
+                Name = "dict";
+                _propertyValues = new Dictionary<string, string>();
+            }
+
+            public DictionaryEvaluator(string name, IDictionary<string, string> propertyValues)
+            {
+                Name = name;
+                _propertyValues = propertyValues;
+            }
+
+            /// <inheritdoc />
+            public string Name { get; }
+
+            /// <inheritdoc />
+            public string Evaluate(string expression)
+            {
+                _propertyValues.TryGetValue(expression, out string value);
+                return value;
+            }
+        }
+
+        [Test]
+        public void placeholders_with_recursion()
+        {
+            IValueEvaluator[] evaluators =
+            {
+                new DictionaryEvaluator("eval1", new Dictionary<string, string> {{ "Prop1", "Value1"}, { "Prop2", "Value2"}, { "Success", "Success!" } }),
+                new DictionaryEvaluator("eval2", new Dictionary<string, string> {{ "Value1_Value2", "Success"}}),
+            };
+
+            SimpleExpressionParser
+                .ParseAndRender("${eval1:Prop1}_${eval1:Prop2}", evaluators)
+                .Should().Be("Value1_Value2");
+
+            SimpleExpressionParser
+                .ParseAndRender("${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
+                .Should().Be("Success");
+
+            evaluators = evaluators.Reverse().ToArray();
+            SimpleExpressionParser
+                .ParseAndRender("${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
+                .Should().Be("Success");
+
+            SimpleExpressionParser
+                .ParseAndRender("${eval1:${eval2:${eval1:Prop1}_${eval1:Prop2}}}", evaluators)
+                .Should().Be("Success!");
+        }
+
         [Test]
         public void Diagnostic_too_many_assemblies()
         {
@@ -424,7 +479,8 @@ namespace MicroElements.Tests
             {
                 ConfigurationPath = "TestsConfiguration/Complex/complex2",
                 ConfigurationTypes = new[] { typeof(ComplexObject), typeof(InnerObject) },
-                ServiceCollection = new ServiceCollection()
+                ServiceCollection = new ServiceCollection(),
+                ProcessRefs = true
             };
 
             var readAllText = File.ReadAllText("TestsConfiguration/Complex/complex2/config.json");

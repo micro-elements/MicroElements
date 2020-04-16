@@ -65,6 +65,11 @@ namespace MicroElements.Bootstrap
         /// </summary>
         public bool DumpConfigurationToLog { get; set; } = true;
 
+        /// <summary>
+        /// Experimental feature for refs in configuration.
+        /// </summary>
+        public bool ProcessRefs { get; set; } = false;
+
         public Action<ModulesOptions> ConfigureModules { get; set; } = options => { };
 
         public ModulesOptions Modules { get; set; } = new ModulesOptions();
