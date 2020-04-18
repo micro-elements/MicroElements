@@ -1,20 +1,20 @@
 // Copyright (c) MicroElements. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace MicroElements.Bootstrap
+namespace MicroElements.Abstractions
 {
     /// <summary>
-    /// Информация об окружении.
+    /// Startup information.
     /// </summary>
     public class StartupInfo
     {
         /// <summary>
-        /// Версия приложения.
+        /// Application version.
         /// </summary>
         public string Version { get; set; }
 
         /// <summary>
-        /// Текущая директория.
+        /// Application current directory.
         /// </summary>
         public string CurrentDirectory { get; set; }
 
@@ -23,7 +23,7 @@ namespace MicroElements.Bootstrap
         public string BaseDirectory { get; set; }
 
         /// <summary>
-        /// Путь к запускаемому бинарнику.
+        /// Application.
         /// </summary>
         public string StartupApp { get; set; }
     }

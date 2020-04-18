@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
-namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
+namespace MicroElements.Configuration.Evaluation
 {
     /// <summary>
     /// Расширения для работы с <see cref="IConfigurationProvider"/>.
@@ -22,11 +22,11 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
             var keys = new List<string>();
             var childKeys = configurationProvider.GetChildKeys(Enumerable.Empty<string>(), null).Distinct().ToArray();
             keys.AddRange(childKeys);
-            AddKeys(keys, configurationProvider, childKeys);
+            keys.AddKeys(configurationProvider, childKeys);
             return keys.ToArray();
         }
 
-        private static void AddKeys(List<string> keys, IConfigurationProvider configurationProvider, IEnumerable<string> parentKeys)
+        private static void AddKeys(this List<string> keys, IConfigurationProvider configurationProvider, IEnumerable<string> parentKeys)
         {
             foreach (var parentPath in parentKeys)
             {
@@ -35,18 +35,18 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
                 if (fullChildKeys.Length > 0)
                 {
                     keys.AddRange(fullChildKeys);
-                    AddKeys(keys, configurationProvider, fullChildKeys);
+                    keys.AddKeys(configurationProvider, fullChildKeys);
                 }
             }
         }
 
         /// <summary>
-        /// Добавление всех KeyValue в targetDictionary />
+        /// Добавление всех KeyValue в targetDictionary.
         /// </summary>
         /// <param name="configurationProvider">Провайдер конфигурации.</param>
         /// <param name="keys">Список ключей.</param>
         /// <param name="targetDictionary">Целевой словарь.</param>
-        public static void AddValuesToDictionary(this IConfigurationProvider configurationProvider, IEnumerable<string> keys, IDictionary<string, string> targetDictionary)
+        public static void CopyValuesToDictionary(this IConfigurationProvider configurationProvider, IEnumerable<string> keys, IDictionary<string, string> targetDictionary)
         {
             foreach (var keyToInclude in keys)
             {
@@ -54,6 +54,14 @@ namespace MicroElements.Bootstrap.Extensions.Configuration.Evaluation
                 {
                     targetDictionary[keyToInclude] = valueToInclude;
                 }
+            }
+        }
+
+        public static void CopyValueToDictionary(this IConfigurationProvider configurationProvider, string key, IDictionary<string, string> targetDictionary)
+        {
+            if (configurationProvider.TryGet(key, out string valueToInclude))
+            {
+                targetDictionary[key] = valueToInclude;
             }
         }
     }

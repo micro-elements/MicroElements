@@ -1,3 +1,7 @@
+# 1.4.0
+- ${include} can be an array of pathes or single path
+- Some unused code removed and simplified
+
 # 1.3.0
 - Recursive evaluations
 

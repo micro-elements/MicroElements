@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using MicroElements.Abstractions;
 using MicroElements.Bootstrap;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.Configuration.Evaluation;

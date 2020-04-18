@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MicroElements.Abstractions;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.Bootstrap.Utils;
 using MicroElements.Configuration;
@@ -124,15 +125,9 @@ namespace MicroElements.Bootstrap
 
                     // Строим провайдер.
                     _buildContext.ServiceProvider = _buildContext.ServiceCollection.BuildServiceProvider();
-
-                    if (startupConfiguration.ExternalBuilder != null)
-                    {
-                        _buildContext.ServiceProvider = ConfigureServicesExt(_buildContext);
-                    }
                 }
                 catch (Exception exception)
                 {
-                    //todo: right logging
                     _buildContext.Logger.LogError(new EventId(0), exception, exception.Message);
                     throw;
                 }
@@ -182,7 +177,6 @@ namespace MicroElements.Bootstrap
         public void ConfigureServices(BuildContext buildContext)
         {
             var logger = buildContext.Logger;
-            logger.LogInformation("ConfigureServices started");
 
             StartupConfiguration startupConfiguration = buildContext.StartupConfiguration;
             ILoggerFactory loggerFactory = buildContext.LoggerFactory;
@@ -233,30 +227,6 @@ namespace MicroElements.Bootstrap
 
             if (moduleTypes.Count > 0)
                 services.RegisterModules(moduleTypes);
-
-            logger.LogInformation("ConfigureServices finished");
-        }
-
-        /// <summary>
-        /// Конфигурирование сервисов.
-        /// </summary>
-        /// <param name="buildContext">Контекст построения приложения.</param>
-        /// <returns>Сконфигурированный <see cref="IServiceProvider"/></returns>
-        public IServiceProvider ConfigureServicesExt(BuildContext buildContext)
-        {
-            var builder = buildContext.StartupConfiguration.ExternalBuilder;
-
-            buildContext.Logger.LogInformation("ConfigureServicesExt started");
-
-            // Регистрируем сервисы, переданные снаружи.
-            builder.AddServices(buildContext.ServiceCollection);
-
-            // Запускаем конфигурирование.
-            var serviceProvider = builder.ConfigureServices(buildContext);
-
-            buildContext.Logger.LogInformation("ConfigureServicesExt finished");
-
-            return serviceProvider;
         }
     }
 }

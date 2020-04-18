@@ -1,9 +1,8 @@
 ﻿// Copyright (c) MicroElements. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using MicroElements.Bootstrap.Extensions.Configuration.Evaluation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 
@@ -37,41 +36,39 @@ namespace MicroElements.Configuration.Evaluation
             // Получим список ключей
             var keys = _configurationProvider.GetKeys();
 
-            bool IsIncludeKey(string key) => key.EndsWith("${include}");
-            bool IsNotIncludeKey(string key) => !IsIncludeKey(key);
+            // ${include}, ${include}:0, ...
+            bool IsIncludeKey(string key) => key.StartsWith("${include}");
 
-            // Ключи с ${include}
-            var keysWithIncludes = keys.Where(IsIncludeKey).ToArray();
-            if (keysWithIncludes.Length > 0)
+            foreach (string key in keys)
             {
-                foreach (var include in keysWithIncludes)
+                if (IsIncludeKey(key))
                 {
-                    if (_configurationProvider.TryGet(include, out string includePath))
+                    if (_configurationProvider.TryGet(key, out string includePath))
                     {
-                        var path = Path.Combine(_rootPath, includePath);
-                        var fullPath = Path.GetFullPath(path);
-
-                        // Создадим провайдер конфигурации и загрузим значения из него
-                        var jsonConfigurationProvider = CreateConfigurationProvider(fullPath);
-                        jsonConfigurationProvider.Load();
-
-                        // Получим все ключи
-                        var keysToInclude = jsonConfigurationProvider.GetKeys();
-
-                        // Добавим все данные из подгруженного файла
-                        jsonConfigurationProvider.AddValuesToDictionary(keysToInclude, Data);
+                        LoadIncludedConfiguration(includePath, Data);
                     }
                 }
+                else
+                {
+                    _configurationProvider.CopyValueToDictionary(key, Data);
+                }
+            }
+        }
 
-                // Добавим ключи, которые были в базовом провайдере
-                var otherKeys = keys.Where(IsNotIncludeKey).ToArray();
-                _configurationProvider.AddValuesToDictionary(otherKeys, Data);
-            }
-            else
-            {
-                // Добавим ключи, которые были в базовом провайдере
-                _configurationProvider.AddValuesToDictionary(keys, Data);
-            }
+        private void LoadIncludedConfiguration(string includePath, IDictionary<string, string> targetDictionary)
+        {
+            var path = Path.Combine(_rootPath, includePath);
+            var fullPath = Path.GetFullPath(path);
+
+            // Создадим провайдер конфигурации и загрузим значения из него
+            var jsonConfigurationProvider = CreateConfigurationProvider(fullPath);
+            jsonConfigurationProvider.Load();
+
+            // Получим все ключи
+            var keysToInclude = jsonConfigurationProvider.GetKeys();
+
+            // Добавим все данные из подгруженного файла
+            jsonConfigurationProvider.CopyValuesToDictionary(keysToInclude, targetDictionary);
         }
 
         private static IConfigurationProvider CreateConfigurationProvider(string fullPath)

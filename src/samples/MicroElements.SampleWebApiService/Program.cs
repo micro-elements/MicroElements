@@ -2,8 +2,6 @@
 using System.IO;
 using System.Reflection;
 using MicroElements.Bootstrap;
-using MicroElements.Bootstrap.Extensions.Configuration;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

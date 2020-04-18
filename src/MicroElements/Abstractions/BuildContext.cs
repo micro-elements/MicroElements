@@ -4,12 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using MicroElements.Bootstrap;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MicroElements.Bootstrap
+namespace MicroElements.Abstractions
 {
     /// <summary>
     /// Контекст построения.

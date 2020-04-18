@@ -81,9 +81,6 @@ namespace MicroElements.Bootstrap
         /// </summary>
         public IServiceCollection ServiceCollection { get; set; }
 
-
-        public IExternalBuilder ExternalBuilder { get; set; }
-
         public IConfigurationBuilder ConfigurationBuilder { get; set; }
 
         /// <summary>
@@ -100,11 +97,6 @@ namespace MicroElements.Bootstrap
         /// Получение сконфигурированой фабрики логирования. Если не задано, то конфигурируется по умолчанию.
         /// </summary>
         public Func<ILoggerFactory> ConfigureLogging { get; set; }
-
-        public Action<ILoggerFactory> ConfigureLogging2 { get; set; }
-
-        public Func<IServiceCollection, ILoggerFactory, ILoggerFactory> ConfigureLogging3 { get; set; }
-
 
         #endregion
     }
