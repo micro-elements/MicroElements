@@ -42,7 +42,7 @@ namespace MicroElements.Bootstrap
         public string Profile { get; set; }
 
         /// <summary>
-        /// The path for logs. Can be relative or absolute. 
+        /// The path for logs. Can be relative or absolute.
         /// <p>Default value is 'logs'.</p>
         /// <p>Evaluated value is set to Environment Variables.</p>
         /// </summary>
@@ -64,11 +64,6 @@ namespace MicroElements.Bootstrap
         /// If <c>true</c> dumps all configuration values to Logger.
         /// </summary>
         public bool DumpConfigurationToLog { get; set; } = true;
-
-        /// <summary>
-        /// Experimental feature for refs in configuration.
-        /// </summary>
-        public bool ProcessRefs { get; set; } = false;
 
         public Action<ModulesOptions> ConfigureModules { get; set; } = options => { };
 

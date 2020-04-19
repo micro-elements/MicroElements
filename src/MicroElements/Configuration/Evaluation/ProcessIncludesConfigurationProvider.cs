@@ -11,21 +11,27 @@ namespace MicroElements.Configuration.Evaluation
     /// <summary>
     /// Провайдер конфигурации для препроцессинга конфигурации.
     /// </summary>
-    public class PreprocessConfigurationProvider : FileConfigurationProvider
+    public class ProcessIncludesConfigurationProvider : FileConfigurationProvider
     {
         private readonly FileConfigurationProvider _configurationProvider;
         private readonly string _rootPath;
+        private readonly IReadOnlyCollection<IValueEvaluator> _valueEvaluators;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PreprocessConfigurationProvider"/> class.
+        /// Initializes a new instance of the <see cref="ProcessIncludesConfigurationProvider"/> class.
         /// </summary>
         /// <param name="configurationProvider">configurationProvider</param>
         /// <param name="rootPath">rootPath</param>
-        public PreprocessConfigurationProvider(FileConfigurationProvider configurationProvider, string rootPath)
+        /// <param name="valueEvaluators">Evaluator that can be used in include.</param>
+        public ProcessIncludesConfigurationProvider(
+            FileConfigurationProvider configurationProvider,
+            string rootPath,
+            IReadOnlyCollection<IValueEvaluator> valueEvaluators = null)
             : base(configurationProvider.Source)
         {
             _configurationProvider = configurationProvider;
             _rootPath = rootPath;
+            _valueEvaluators = valueEvaluators;
         }
 
         /// <inheritdoc />
@@ -45,6 +51,7 @@ namespace MicroElements.Configuration.Evaluation
                 {
                     if (_configurationProvider.TryGet(key, out string includePath))
                     {
+                        includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
                         LoadIncludedConfiguration(includePath, Data);
                     }
                 }

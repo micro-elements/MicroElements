@@ -20,19 +20,6 @@ namespace MicroElements.Tests
 {
     public class BootstrapTests
     {
-        //[OneTimeSetUp]
-        //public void TestFixtureSetUp()
-        //{
-        //    var startupConfiguration = new StartupConfiguration
-        //    {
-        //        ConfigurationPath = "TestsConfiguration/Bootstrap",
-        //        Profile = null
-        //    };
-
-        //    // Прогрев
-        //    // new ApplicationBuilder().BuildAndStart(startupConfiguration);
-        //}
-
         [Test(Description = "Читаем конфигурацию без профиля")]
         public void ReadTypedConfigurationWithNoProfile()
         {
@@ -169,7 +156,7 @@ namespace MicroElements.Tests
 
             sampleOptions.SharedValue.Should().BeEquivalentTo("SharedValueFromCommon");
             sampleOptions.Value.Should().BeEquivalentTo("OverridenByProfile2");
-            sampleOptions.OptionalValue.Should().BeEquivalentTo(null);
+            sampleOptions.OptionalValue.Should().BeEquivalentTo("OptionalValueFromCommonWithProfile2");
         }
 
         [Test]
@@ -455,94 +442,6 @@ namespace MicroElements.Tests
         }
 
         [Test]
-        public void ComplexWithRef()
-        {
-            /*
-            {
-                "ComplexObject": {
-                    "Name": "Complex",
-                    "Inner": "${ref:InnerObject:First}"
-                },
-                "$objects": {
-                    "InnerObject:First": {
-                        "Name": "First",
-                        "Value": "InnerValue"
-                    },
-                    "InnerObject:Second": {
-                        "Name": "Second",
-                        "Value": "InnerValue2"
-                    }
-                }
-            }
-            */
-            var startupOptions = new StartupConfiguration
-            {
-                ConfigurationPath = "TestsConfiguration/Complex/complex2",
-                ConfigurationTypes = new[] { typeof(ComplexObject), typeof(InnerObject) },
-                ServiceCollection = new ServiceCollection(),
-                ProcessRefs = true
-            };
-
-            var readAllText = File.ReadAllText("TestsConfiguration/Complex/complex2/config.json");
-            var jsonSerializerSettings = new JsonSerializerSettings()
-            {
-                ReferenceResolverProvider = () => new ReferenceResolver(readAllText)
-            };
-            var deserializeObject = JsonConvert.DeserializeObject<ComplexObjectContainer>(readAllText, jsonSerializerSettings);
-
-            startupOptions.ServiceCollection.AddSingleton<IConfigureOptions<ComplexObject>>(
-                provider => new ConfigureRefProperty<ComplexObject>(provider, "Inner", typeof(InnerObject), "Second"));
-
-            var serviceProvider = new ApplicationBuilder().Build(startupOptions);
-
-            var innerObject = serviceProvider.GetService<IEnumerable<InnerObject>>();
-            var complexObject = serviceProvider.GetRequiredService<ComplexObject>();
-            complexObject.Should().NotBeNull();
-            complexObject.Name.Should().Be("Complex");
-            complexObject.Inner.Should().NotBeNull();
-
-            complexObject.Inner.Name.Should().Be("InnerName");
-            complexObject.Inner.Value.Should().Be("InnerValue");
-        }
-
-        class ReferenceResolver : IReferenceResolver
-        {
-            JObject _jObject;
-            public ReferenceResolver(string text)
-            {
-                _jObject = (JObject)JsonConvert.DeserializeObject(text);
-            }
-
-            /// <inheritdoc />
-            public object ResolveReference(object context, string reference)
-            {
-                //JsonSerializerInternalReader
-                var token = _jObject.SelectToken("objects").SelectToken("InnerObject:First");
-                var deserializeObject = JsonConvert.DeserializeObject(token.ToString(), typeof(InnerObject));
-                return deserializeObject;
-                return new InnerObject() { Name = "aa", Value = "aa" };
-            }
-
-            /// <inheritdoc />
-            public string GetReference(object context, object value)
-            {
-                throw new NotImplementedException();
-            }
-
-            /// <inheritdoc />
-            public bool IsReferenced(object context, object value)
-            {
-                throw new NotImplementedException();
-            }
-
-            /// <inheritdoc />
-            public void AddReference(object context, string reference, object value)
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        [Test]
         public void RegisterMultipleObjects()
         {
             var startupOptions = new StartupConfiguration
@@ -556,8 +455,6 @@ namespace MicroElements.Tests
             options.Length.Should().Be(2);
         }
     }
-
-
 
     public static class AssertExtensions
     {

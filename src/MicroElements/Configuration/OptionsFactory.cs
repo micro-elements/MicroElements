@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using MicroElements.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace MicroElements.Configuration
@@ -24,6 +25,7 @@ namespace MicroElements.Configuration
         /// Initializes a new instance of the <see cref="OptionsFactory{TOptions}"/> class.
         /// </summary>
         /// <param name="setups">setups.</param>
+        /// <param name="serviceProvider"><see cref="IServiceProvider"/> to create default values for options if needed.</param>
         /// <param name="defaultValueProviders">Провайдер значения по-умолчанию для типа.</param>
         public OptionsFactory(
             IEnumerable<IConfigureOptions<TOptions>> setups,
@@ -38,15 +40,17 @@ namespace MicroElements.Configuration
         /// <inheritdoc />
         public TOptions Create(string name)
         {
-            if (typeof(TOptions).Name == "ComplexObject")
+            TOptions instance;
+            if (_serviceProvider != null && _defaultValueProviders != null)
             {
-                var type = Type.GetType("MicroElements.Tests.Model.InnerObject, MicroElements.Tests");
-                var enumerableType = typeof(IEnumerable<>).MakeGenericType(type);
-                var service = _serviceProvider.GetService(enumerableType);
+                IDefaultValueProvider<TOptions> defaultValueProvider = _defaultValueProviders.GetService(_serviceProvider, name);
+                instance = defaultValueProvider != null ? defaultValueProvider.GetDefault() : ActivatorUtilities.CreateInstance<TOptions>(_serviceProvider);
+            }
+            else
+            {
+                instance = Activator.CreateInstance<TOptions>();
             }
 
-            IDefaultValueProvider<TOptions> defaultValueProvider = null; //_defaultValueProviders.GetService(null, name);//todo: IDefaultValueProvider
-            TOptions instance = defaultValueProvider != null ? defaultValueProvider.GetDefault() : Activator.CreateInstance<TOptions>();
             foreach (IConfigureOptions<TOptions> setup in _setups)
             {
                 IConfigureNamedOptions<TOptions> configureNamedOptions;

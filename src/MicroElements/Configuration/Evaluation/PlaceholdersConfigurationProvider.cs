@@ -52,7 +52,7 @@ namespace MicroElements.Configuration.Evaluation
 
         public static bool TryParseAndRender(string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators, out string value)
         {
-            if (valueWithPlaceholderOriginal != null)
+            if (valueWithPlaceholderOriginal != null && evaluators != null)
             {
                 var valueWithPlaceholder = valueWithPlaceholderOriginal;
                 string valueWithPlaceholderPrev = null;

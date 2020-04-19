@@ -1,5 +1,8 @@
 ﻿{
-    "${include}": [ "../common/sample_common.json" ],
+    "${include}": [
+        "../common/sample_common.json",
+        "../common/sample_common.${environment:profile}.json"
+    ],
     "Configuration": {
         "SampleOptions": {
             "Value": "OverridenByProfile2"

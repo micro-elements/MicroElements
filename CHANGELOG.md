@@ -1,3 +1,6 @@
+# 1.5.0
+- Limited support of placeholders for ${include}
+
 # 1.4.0
 - ${include} can be an array of pathes or single path
 - Some unused code removed and simplified

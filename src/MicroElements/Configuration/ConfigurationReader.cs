@@ -2,16 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MicroElements.Abstractions;
 using MicroElements.Bootstrap;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.Configuration.Evaluation;
-using MicroElements.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MicroElements.Configuration
 {
@@ -37,6 +36,10 @@ namespace MicroElements.Configuration
                 builder = startupConfiguration.BeginConfiguration(builder);
             }
 
+            // Вычислители без контекста
+            var evaluators = ValueEvaluator.CreateValueEvaluators(buildContext, null, statelessEvaluators: true);
+            builder.Properties.SetValue(BuilderContext.Key.StatelessEvaluators, evaluators.ToArray());
+
             // Добавляем стандартное конфигурирование из файловой директории.
             AddFileConfiguration(buildContext, builder);
 
@@ -49,52 +52,15 @@ namespace MicroElements.Configuration
                 builder = startupConfiguration.EndConfiguration(builder);
             }
 
-            // Построение конфигурации
+            // (Step1) Построение конфигурации
             var configurationRoot = builder.Build();
 
-            // Делаем копию ServiceCollection, чтобы не портить временной регистрацией.
-            IServiceCollection serviceCollectionCopy = buildContext.ServiceCollection.Copy();
-            serviceCollectionCopy.AddSingleton(configurationRoot);
-            serviceCollectionCopy.AddSingletons<IValueEvaluator>(buildContext.ExportedTypes);
-
-            var serviceProvider = serviceCollectionCopy.BuildServiceProvider();
-            var valueEvaluators = serviceProvider.GetServices<IValueEvaluator>();
-
-            // Добавляем свой ConfigurationSource
+            // Для вычисления Placeholders.
+            IEnumerable<IValueEvaluator> valueEvaluators = ValueEvaluator.CreateValueEvaluators(buildContext, configurationRoot);
             builder.Add(new PlaceholdersConfigurationSource(configurationRoot, valueEvaluators));
 
-            // Повторное построение, чтобы рассчитать вычисляемые значения
+            // (Step2) Повторное построение, чтобы рассчитать вычисляемые значения.
             buildContext.ConfigurationRoot = builder.Build();
-
-            if (startupConfiguration.ProcessRefs)
-                ProcessRefs(buildContext, startupConfiguration);
-        }
-
-        private static void ProcessRefs(BuildContext buildContext, StartupConfiguration startupConfiguration)
-        {
-            var values = buildContext.ConfigurationRoot.GetAllValues();
-            var valuesWithRefs = values.Where(pair => pair.Value?.StartsWith("${ref:") ?? false).ToList();
-            if (valuesWithRefs.Count > 0)
-            {
-                var configurationTypes =
-                    ConfigurationRegistration.GetConfigurationTypes(buildContext.ExportedTypes, startupConfiguration);
-
-                foreach (var valuesWithRef in valuesWithRefs)
-                {
-                    string optionPropertyName = valuesWithRef.Key.Split(':').Last();
-                    var typeName = valuesWithRef.Key.Split(':').First();
-                    Type refObjectType = configurationTypes.FirstOrDefault(type => type.Name == typeName);
-                    string refObjectName =
-                        valuesWithRef.Value.Substring(6, valuesWithRef.Value.Length - 6 - 1).Split(':').Last();
-
-                    /*
-                     * services.AddSingleton<IConfigureOptions<ComplexObject>>(
-                           provider => new ConfigureRefProperty<ComplexObject>(provider, "Inner", typeof(InnerObject), "Second"));
-                     */
-
-                    var services = buildContext.ServiceCollection;
-                }
-            }
         }
 
         /// <summary>
@@ -127,7 +93,8 @@ namespace MicroElements.Configuration
                         // Создадим провайдер Json и обернем его в свой декоратор.
                         var jsonConfigurationSource = new JsonConfigurationSource { Path = file.PathNormalize(), Optional = false, ReloadOnChange = true };
                         jsonConfigurationSource.ResolveFileProvider();
-                        builder.Add(new PreprocessConfigurationSource(jsonConfigurationSource, configurationPath.PathNormalize()));
+                        var statelessEvaluators = builder.Properties.GetValue(BuilderContext.Key.StatelessEvaluators) ?? Array.Empty<IValueEvaluator>();
+                        builder.Add(new ProcessIncludesConfigurationSource(jsonConfigurationSource, configurationPath.PathNormalize(), statelessEvaluators));
                     }
                 }
             }
@@ -147,9 +114,8 @@ namespace MicroElements.Configuration
             return builder.AddConfigurationFiles(configurationPath, new[] { "*.json", "*.xml" });
         }
 
-        private static IConfigurationBuilder AddFileConfiguration(BuildContext buildContext, IConfigurationBuilder builder)
+        private static void AddFileConfiguration(BuildContext buildContext, IConfigurationBuilder builder)
         {
-            //todo: use IBuildContext
             var startupConfiguration = buildContext.StartupConfiguration;
 
             var configurationPath = startupConfiguration.ConfigurationPath;
@@ -194,7 +160,6 @@ namespace MicroElements.Configuration
                     buildContext.AddBuildInfo("ConfigurationProfileDirectory", profileDirectory);
                 }
             }
-            return builder;
         }
     }
 }

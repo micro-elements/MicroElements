@@ -1,0 +1,8 @@
+﻿{
+  "Configuration": {
+    "SampleOptions": {
+        "Value": "ShouldBeOverridenBecauseIncludesAddedFirstAndPropsFromFileAfter",
+        "OptionalValue": "OptionalValueFromCommonWithProfile2"
+    }
+  }
+}
