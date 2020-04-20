@@ -76,6 +76,9 @@ namespace MicroElements.Bootstrap
         /// </summary>
         public IServiceCollection ServiceCollection { get; set; }
 
+        /// <summary>
+        /// Билдер конфигурации.
+        /// </summary>
         public IConfigurationBuilder ConfigurationBuilder { get; set; }
 
         /// <summary>
@@ -87,6 +90,11 @@ namespace MicroElements.Bootstrap
         /// Действие, позволяющее добавить свою логику конфигурации в конец конфигурирования конфигурации.
         /// </summary>
         public Func<IConfigurationBuilder, IConfigurationBuilder> EndConfiguration { get; set; }
+
+        /// <summary>
+        /// Функция определения секретных ключей конфигурации. Чтобы скрывать в отображении.
+        /// </summary>
+        public Func<string, bool> IsSecretConfigurationKey { get; set; }
 
         /// <summary>
         /// Получение сконфигурированой фабрики логирования. Если не задано, то конфигурируется по умолчанию.

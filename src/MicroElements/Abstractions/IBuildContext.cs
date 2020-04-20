@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace MicroElements.Bootstrap
 {
@@ -38,6 +39,16 @@ namespace MicroElements.Bootstrap
         /// All exported types from loaded assemblies.
         /// </summary>
         Type[] ExportedTypes { get; }
+
+        /// <summary>
+        /// Фабрика логирования.
+        /// </summary>
+        ILoggerFactory LoggerFactory { get; }
+
+        /// <summary>
+        /// Основной логгер для процесса инициализации.
+        /// </summary>
+        ILogger Logger { get; }
 
         /// <summary>
         /// Adds build info.

@@ -39,7 +39,7 @@ namespace MicroElements.Configuration.Evaluation
             }
 
             var serviceProvider = serviceCollectionCopy.BuildServiceProvider();
-            var valueEvaluators = serviceProvider.GetServices<IValueEvaluator>();
+            var valueEvaluators = serviceProvider.GetServices<IValueEvaluator>() ?? Array.Empty<IValueEvaluator>();
             return valueEvaluators;
         }
     }

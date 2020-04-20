@@ -136,7 +136,7 @@ namespace MicroElements.Bootstrap
             // Dump значений конфигурации в лог
             if (startupConfiguration.DumpConfigurationToLog)
             {
-                _buildContext.ConfigurationRoot.DumpConfigurationToLog(_buildContext.LoggerFactory);
+                _buildContext.ConfigurationRoot.DumpConfigurationToLog(_buildContext.LoggerFactory, startupConfiguration.IsSecretConfigurationKey, "Configuration");
             }
 
             measureSession.LogMeasures(_buildContext.Logger);

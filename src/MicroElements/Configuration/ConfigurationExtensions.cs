@@ -1,6 +1,7 @@
 ﻿// Copyright (c) MicroElements. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
@@ -24,30 +25,43 @@ namespace MicroElements.Configuration
         }
 
         /// <summary>
+        /// Default Func to determine secret key.
+        /// </summary>
+        /// <param name="key">Configuration key.</param>
+        /// <returns>True if key is secret.</returns>
+        public static bool IsPassword(string key)
+        {
+            var lowerKey = key?.ToLowerInvariant() ?? string.Empty;
+            return lowerKey.Contains("pass") || lowerKey.Contains("secure") || lowerKey.Contains("secret");
+        }
+
+        /// <summary>
         /// Dumps <see cref="IConfiguration"/> to <see cref="ILoggerFactory"/>.
         /// </summary>
         /// <param name="configuration">Configuration.</param>
         /// <param name="loggerFactory">LoggerFactory.</param>
+        /// <param name="isPassword">Func to determine secret key.</param>
         /// <param name="loggerName">The name of logger.</param>
-        public static void DumpConfigurationToLog(this IConfiguration configuration, ILoggerFactory loggerFactory, string loggerName = "Configuration")
+        public static void DumpConfigurationToLog(this IConfiguration configuration, ILoggerFactory loggerFactory, Func<string, bool> isPassword = null, string loggerName = "Configuration")
         {
+            isPassword ??= IsPassword;
+
             // Note: здесь специально создается именованный логгер, чтобы отфильтровать записи в отдельный файл.
             var configurationLogger = loggerFactory.CreateLogger(loggerName);
-            configuration.DumpConfigurationToLog(configurationLogger);
+            configuration.DumpConfigurationToLog(configurationLogger, isPassword);
         }
 
         /// <summary>
         /// Дамп в лог всей конфигурации.
         /// </summary>
-        public static void DumpConfigurationToLog(this IConfiguration configuration, ILogger logger)
+        public static void DumpConfigurationToLog(this IConfiguration configuration, ILogger logger, Func<string, bool> isPassword = null)
         {
-            var keyValuePairs = configuration.GetAllValues();
-            //todo: make parameter
-            bool IsPassword(string key) => key.Contains("Password");
+            isPassword ??= IsPassword;
 
+            var keyValuePairs = configuration.GetAllValues();
             foreach (var keyValuePair in keyValuePairs)
             {
-                var value = IsPassword(keyValuePair.Key) ? "***" : keyValuePair.Value;
+                var value = isPassword(keyValuePair.Key) ? "***" : keyValuePair.Value;
                 logger.LogInformation("{0}: {1}", keyValuePair.Key, value);
             }
         }

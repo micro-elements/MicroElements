@@ -37,8 +37,10 @@ namespace MicroElements.Configuration
             }
 
             // Вычислители без контекста
-            var evaluators = ValueEvaluator.CreateValueEvaluators(buildContext, null, statelessEvaluators: true);
-            builder.Properties.SetValue(BuilderContext.Key.StatelessEvaluators, evaluators.ToArray());
+            var evaluators = builder.Properties.GetValue(BuilderContext.Key.StatelessEvaluators);
+            if (evaluators == null)
+                evaluators = ValueEvaluator.CreateValueEvaluators(buildContext, null, statelessEvaluators: true).ToArray();
+            builder.Properties.SetValue(BuilderContext.Key.StatelessEvaluators, evaluators);
 
             // Добавляем стандартное конфигурирование из файловой директории.
             AddFileConfiguration(buildContext, builder);
