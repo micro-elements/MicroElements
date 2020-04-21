@@ -1,8 +1,10 @@
+# 1.7.0
+- Microsoft.Extensions updated to 3.1.3
+
 # 1.6.0
 - IsSecretConfigurationKey added to StartupConfiguration
 - ILogger and ILoggerFactory added to IBuildContext
 - Evaluators can be set to ConfigurationBuilder.Properties for usin in include blocks
-
 
 # 1.5.0
 - Limited support of placeholders for ${include}
