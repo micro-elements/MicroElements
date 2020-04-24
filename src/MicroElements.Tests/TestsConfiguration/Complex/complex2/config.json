@@ -1,16 +1,18 @@
 ﻿{
+    "profile" : "Second",
     "ComplexObject": {
         "Name": "Complex",
-        "Inner": { "$ref": "#/objects/InnerObject:First" }
+        "UserName": "${configurationValue:Environment:${configurationValue:profile}:UserName}",
+        "Password": "${configurationValue:Environment:${configurationValue:profile}:Password}"
     },
-    "objects": {
-        "InnerObject:First": {
-            "Name": "First",
-            "Value": "InnerValue"
+    "Environment": {
+        "First": {
+            "UserName": "First",
+            "Password": "FirstPassword"
         },
-        "InnerObject:Second": {
-            "Name": "Second",
-            "Value": "InnerValue2"
+        "Second": {
+            "UserName": "Second",
+            "Password": "SecondPassword"
         }
     }
 }

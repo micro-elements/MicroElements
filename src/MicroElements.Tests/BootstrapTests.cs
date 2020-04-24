@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using FluentAssertions;
 using MicroElements.Bootstrap;
@@ -11,9 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 
 namespace MicroElements.Tests
@@ -344,7 +340,7 @@ namespace MicroElements.Tests
 
             public DictionaryEvaluator()
             {
-                Name = "dict";
+                Name = "dict" ;
                 _propertyValues = new Dictionary<string, string>();
             }
 
@@ -442,17 +438,15 @@ namespace MicroElements.Tests
         }
 
         [Test]
-        public void RegisterMultipleObjects()
+        public void Complex2()
         {
             var startupOptions = new StartupConfiguration
             {
-                ConfigurationPath = "TestsConfiguration/Array",
-                Profile = null
+                ConfigurationPath = "TestsConfiguration/Complex/complex2",
+                ConfigurationTypes = new[] { typeof(ComplexObject) }
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
-
-            var options = serviceProvider.GetRequiredService<IEnumerable<SampleOptions>>().ToArray();
-            options.Length.Should().Be(2);
+            var buildContext = new ApplicationBuilder().Build(startupOptions);
+            buildContext.ConfigurationRoot["ComplexObject:UserName"].Should().Be("Second");
         }
     }
 

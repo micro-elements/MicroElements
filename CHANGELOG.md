@@ -1,3 +1,6 @@
+# 1.8.0
+- ${include} only if path is not null or empty after resolve
+
 # 1.7.0
 - Microsoft.Extensions updated to 3.1.3
 

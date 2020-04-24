@@ -14,7 +14,7 @@ namespace MicroElements.Configuration.Evaluation
         string Name { get; }
 
         /// <summary>
-        /// Вычисление значения.
+        /// Expression evaluation.
         /// </summary>
         /// <param name="expression">Выражение для вычисления.</param>
         /// <returns>Вычисленное значение.</returns>

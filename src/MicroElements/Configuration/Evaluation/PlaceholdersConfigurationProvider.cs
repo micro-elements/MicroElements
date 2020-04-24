@@ -63,7 +63,7 @@ namespace MicroElements.Configuration.Evaluation
 
                     foreach (var evaluator in evaluators)
                     {
-                        string placeholderTag = evaluator.PlaceholderTag();
+                        var placeholderTag = evaluator.PlaceholderTag();
 
                         int startIndex = 0;
                         int tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, startIndex, StringComparison.InvariantCultureIgnoreCase);

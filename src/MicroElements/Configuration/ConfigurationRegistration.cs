@@ -155,25 +155,12 @@ namespace MicroElements.Configuration
             if (HasConfigurationValues(configurationSection))
                 return new[] { configurationSection };
 
-            var typedSection = configurationRoot.GetSection($"$objects:{name}");
-            var sections = typedSection.GetChildren().ToList();
-            if (sections.Count > 0)
-            {
-                return sections.ToArray();
-            }
-
             return null;
         }
 
         private static bool HasConfigurationValues(IConfigurationSection section)
         {
-            if (section.Key == "ComplexObject")
-            {
-                int i = 0;
-            }
-
             var children = section.GetChildren();
-            var keys = children.Select(configurationSection => configurationSection.Key);
             return section.Value != null || children.Any();
         }
     }

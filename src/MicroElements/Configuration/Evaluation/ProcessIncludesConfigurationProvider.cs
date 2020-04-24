@@ -52,7 +52,9 @@ namespace MicroElements.Configuration.Evaluation
                     if (_configurationProvider.TryGet(key, out string includePath))
                     {
                         includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
-                        LoadIncludedConfiguration(includePath, Data);
+                        bool shouldLoad = !string.IsNullOrWhiteSpace(includePath);
+                        if (shouldLoad)
+                            LoadIncludedConfiguration(includePath, Data);
                     }
                 }
                 else
