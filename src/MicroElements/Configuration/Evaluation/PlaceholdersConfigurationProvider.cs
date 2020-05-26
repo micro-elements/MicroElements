@@ -34,7 +34,7 @@ namespace MicroElements.Configuration.Evaluation
         {
             _propertiesWithPlaceholders.TryGetValue(key, out string valueWithPlaceholder);
 
-            return SimpleExpressionParser.TryParseAndRender(valueWithPlaceholder, _evaluators, out value);
+            return SimpleExpressionParser.TryParseAndRender(key, valueWithPlaceholder, _evaluators, out value);
         }
 
         private Dictionary<string, string> GetPropertiesWithPlaceholders(IConfigurationRoot configurationRoot)
@@ -50,7 +50,7 @@ namespace MicroElements.Configuration.Evaluation
     {
         public static bool HasPlaceholderFor(this string value, IReadOnlyCollection<IValueEvaluator> evaluators) => evaluators.Any(evaluator => value.Contains(evaluator.PlaceholderTag()));
 
-        public static bool TryParseAndRender(string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators, out string value)
+        public static bool TryParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators, out string value)
         {
             if (valueWithPlaceholderOriginal != null && evaluators != null)
             {
@@ -71,6 +71,7 @@ namespace MicroElements.Configuration.Evaluation
                         while (tagIndex >= 0)
                         {
                             placeholderValueEndIndex = valueWithPlaceholder.IndexOf('}', tagIndex);
+
                             if (placeholderValueEndIndex > 0)
                             {
                                 var placeholderValueStartIndex = tagIndex + placeholderTag.Length;
@@ -78,7 +79,7 @@ namespace MicroElements.Configuration.Evaluation
 
                                 if (!expressionValue.HasPlaceholderFor(evaluators))
                                 {
-                                    string evaluatedValue = evaluator.Evaluate(expressionValue);
+                                    string evaluatedValue = evaluator.Evaluate(key, expressionValue);
                                     evaluatedValue ??= string.Empty;
 
                                     if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
@@ -98,6 +99,11 @@ namespace MicroElements.Configuration.Evaluation
                                     tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, startIndex, StringComparison.InvariantCultureIgnoreCase);
                                 }
                             }
+                            else if (placeholderValueEndIndex == -1)
+                            {
+                                // no close bracket.
+                                break;
+                            }
                         }
                     }
                 }
@@ -112,9 +118,15 @@ namespace MicroElements.Configuration.Evaluation
 
         public static string PlaceholderTag(this IValueEvaluator evaluator) => $"${{{evaluator.Name}:";
 
+        public static string ParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators)
+        {
+            TryParseAndRender(key, valueWithPlaceholderOriginal, evaluators, out string value);
+            return value;
+        }
+
         public static string ParseAndRender(string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators)
         {
-            TryParseAndRender(valueWithPlaceholderOriginal, evaluators, out string value);
+            TryParseAndRender(string.Empty, valueWithPlaceholderOriginal, evaluators, out string value);
             return value;
         }
     }

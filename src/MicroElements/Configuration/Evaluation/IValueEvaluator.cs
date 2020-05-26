@@ -4,7 +4,7 @@
 namespace MicroElements.Configuration.Evaluation
 {
     /// <summary>
-    /// Вычислитель значения.
+    /// Expression evaluator.
     /// </summary>
     public interface IValueEvaluator
     {
@@ -16,8 +16,9 @@ namespace MicroElements.Configuration.Evaluation
         /// <summary>
         /// Expression evaluation.
         /// </summary>
-        /// <param name="expression">Выражение для вычисления.</param>
-        /// <returns>Вычисленное значение.</returns>
-        string Evaluate(string expression);
+        /// <param name="key">Expression key.</param>
+        /// <param name="expression">Expression.</param>
+        /// <returns>Evaluated result.</returns>
+        string Evaluate(string key, string expression);
     }
 }

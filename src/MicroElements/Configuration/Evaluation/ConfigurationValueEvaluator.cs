@@ -26,11 +26,9 @@ namespace MicroElements.Configuration.Evaluation
         public string Name => "configurationValue";
 
         /// <inheritdoc />
-        public string Evaluate(string expression)
+        public string Evaluate(string key, string expression)
         {
-            // Часто используют '.' вместо ':', поэтому автоматом исправим
-            var configurationKey = expression.Replace('.', ':');
-            var value = _configurationRoot.GetValue<string>(configurationKey);
+            var value = _configurationRoot.GetValue<string>(expression);
             return value;
         }
     }

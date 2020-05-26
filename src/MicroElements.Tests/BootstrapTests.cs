@@ -311,7 +311,7 @@ namespace MicroElements.Tests
 
         [Test]
         [TestCase("${configurationValue:Placeholders:Value}", "ValueFromPlaceholder", TestName = "simple_placeholder")]
-        [TestCase("${configurationValue:Placeholders.Value}", "ValueFromPlaceholder", TestName = "simple_placeholder_with_dot")]
+        [TestCase("${configurationValue:Placeholders.Value}", "", TestName = "simple_placeholder_with_dot")]
         [TestCase("${configurationValue:Placeholders:Value} end", "ValueFromPlaceholder end", TestName = "placeholder_in_start_of_text")]
         [TestCase("Some text ${configurationValue:Placeholders:Value}", "Some text ValueFromPlaceholder", TestName = "placeholder_in_end_of_text")]
         [TestCase("Some text ${configurationValue:Placeholders:Value} end", "Some text ValueFromPlaceholder end", TestName = "placeholder_in_middle_of_text")]
@@ -354,7 +354,7 @@ namespace MicroElements.Tests
             public string Name { get; }
 
             /// <inheritdoc />
-            public string Evaluate(string expression)
+            public string Evaluate(string key, string expression)
             {
                 _propertyValues.TryGetValue(expression, out string value);
                 return value;
@@ -386,6 +386,20 @@ namespace MicroElements.Tests
             SimpleExpressionParser
                 .ParseAndRender("${eval1:${eval2:${eval1:Prop1}_${eval1:Prop2}}}", evaluators)
                 .Should().Be("Success!");
+        }
+
+        [Test]
+        public void expression_with_error()
+        {
+            IValueEvaluator[] evaluators =
+            {
+                new DictionaryEvaluator("eval1", new Dictionary<string, string> {{ "Prop1", "Value1"}, { "Prop2", "Value2"}, { "Success", "Success!" } }),
+                new DictionaryEvaluator("eval2", new Dictionary<string, string> {{ "Value1_Value2", "Success"}}),
+            };
+
+            SimpleExpressionParser
+                .ParseAndRender("${eval1:Prop1", evaluators)
+                .Should().Be("${eval1:Prop1");
         }
 
         [Test]

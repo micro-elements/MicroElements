@@ -1,3 +1,8 @@
+# 2.0.0
+- Breaking: Added key to IEvaluator to support evaluators with context knowlege
+- Fixed parse recursion whem close bracket not found
+- Change: configurationValue evaluator does not replaces dots
+
 # 1.8.0
 - ${include} only if path is not null or empty after resolve
 
