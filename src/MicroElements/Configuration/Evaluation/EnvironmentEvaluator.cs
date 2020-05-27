@@ -12,7 +12,7 @@ namespace MicroElements.Configuration.Evaluation
     public class EnvironmentEvaluator : IValueEvaluator
     {
         /// <inheritdoc />
-        public string Name => "environment";
+        public EvaluatorInfo Info => new EvaluatorInfo("environment", 10);
 
         /// <inheritdoc />
         public string Evaluate(string key, string expression)

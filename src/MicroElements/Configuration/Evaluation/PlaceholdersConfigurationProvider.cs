@@ -25,7 +25,8 @@ namespace MicroElements.Configuration.Evaluation
         public PlaceholdersConfigurationProvider(IConfigurationRoot configurationRoot, IEnumerable<IValueEvaluator> evaluators)
         {
             _configurationRoot = configurationRoot;
-            _evaluators = evaluators.ToArray();
+            _evaluators = evaluators.OrderBy(evaluator => evaluator.Info.Order).ToArray();
+
             _propertiesWithPlaceholders = GetPropertiesWithPlaceholders(configurationRoot);
         }
 
@@ -82,6 +83,12 @@ namespace MicroElements.Configuration.Evaluation
                                     string evaluatedValue = evaluator.Evaluate(key, expressionValue);
                                     evaluatedValue ??= string.Empty;
 
+                                    if (evaluatedValue == expressionValue)
+                                    {
+                                        // value was unchanged - try next evaluator
+                                        break;
+                                    }
+
                                     if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
                                     {
                                         value = evaluatedValue;
@@ -116,7 +123,7 @@ namespace MicroElements.Configuration.Evaluation
             return false;
         }
 
-        public static string PlaceholderTag(this IValueEvaluator evaluator) => $"${{{evaluator.Name}:";
+        public static string PlaceholderTag(this IValueEvaluator evaluator) => $"${{{evaluator.Info.Name}:";
 
         public static string ParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators)
         {

@@ -340,18 +340,18 @@ namespace MicroElements.Tests
 
             public DictionaryEvaluator()
             {
-                Name = "dict" ;
+                Info = new EvaluatorInfo("dict");
                 _propertyValues = new Dictionary<string, string>();
             }
 
             public DictionaryEvaluator(string name, IDictionary<string, string> propertyValues)
             {
-                Name = name;
+                Info = new EvaluatorInfo(name);
                 _propertyValues = propertyValues;
             }
 
             /// <inheritdoc />
-            public string Name { get; }
+            public EvaluatorInfo Info { get; }
 
             /// <inheritdoc />
             public string Evaluate(string key, string expression)

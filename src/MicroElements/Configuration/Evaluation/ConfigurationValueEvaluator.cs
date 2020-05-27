@@ -23,7 +23,7 @@ namespace MicroElements.Configuration.Evaluation
         }
 
         /// <inheritdoc />
-        public string Name => "configurationValue";
+        public EvaluatorInfo Info => new EvaluatorInfo("configurationValue", 20);
 
         /// <inheritdoc />
         public string Evaluate(string key, string expression)

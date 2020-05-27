@@ -1,3 +1,8 @@
+# 2.1.0
+- Breaking: Added IEvaluator.EvaluatorInfo property instead Name
+- Ordering evaluators
+- If evaluator skips value (returns the same value) then next evaluators take chance
+
 # 2.0.0
 - Breaking: Added key to IEvaluator to support evaluators with context knowlege
 - Fixed parse recursion whem close bracket not found
