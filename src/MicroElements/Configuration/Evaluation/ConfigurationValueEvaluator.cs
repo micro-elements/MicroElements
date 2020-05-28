@@ -26,10 +26,10 @@ namespace MicroElements.Configuration.Evaluation
         public EvaluatorInfo Info => new EvaluatorInfo("configurationValue", 20);
 
         /// <inheritdoc />
-        public string Evaluate(string key, string expression)
+        public EvaluationResult Evaluate(EvaluationContext context)
         {
-            var value = _configurationRoot.GetValue<string>(expression);
-            return value;
+            var value = _configurationRoot.GetValue<string>(context.Expression);
+            return EvaluationResult.Create(context, value);
         }
     }
 }

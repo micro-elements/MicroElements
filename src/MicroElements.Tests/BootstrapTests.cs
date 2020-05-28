@@ -354,10 +354,10 @@ namespace MicroElements.Tests
             public EvaluatorInfo Info { get; }
 
             /// <inheritdoc />
-            public string Evaluate(string key, string expression)
+            public EvaluationResult Evaluate(EvaluationContext context)
             {
-                _propertyValues.TryGetValue(expression, out string value);
-                return value;
+                _propertyValues.TryGetValue(context.Expression, out string value);
+                return EvaluationResult.Create(context, value);
             }
         }
 

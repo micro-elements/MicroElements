@@ -55,11 +55,11 @@ namespace MicroElements.Configuration
             }
 
             // (Step1) Построение конфигурации
-            var configurationRoot = builder.Build();
+            var preprocessedConfiguration = builder.Build();
 
             // Для вычисления Placeholders.
-            IEnumerable<IValueEvaluator> valueEvaluators = ValueEvaluator.CreateValueEvaluators(buildContext, configurationRoot);
-            builder.Add(new PlaceholdersConfigurationSource(configurationRoot, valueEvaluators));
+            IEnumerable<IValueEvaluator> valueEvaluators = ValueEvaluator.CreateValueEvaluators(buildContext, preprocessedConfiguration);
+            builder.Add(new PlaceholdersConfigurationSource(preprocessedConfiguration, valueEvaluators));
 
             // (Step2) Повторное построение, чтобы рассчитать вычисляемые значения.
             buildContext.ConfigurationRoot = builder.Build();
@@ -67,7 +67,7 @@ namespace MicroElements.Configuration
 
         /// <summary>
         /// Добавление всех конфигурационных файлов в конфигурацию.
-        /// Файлы конфигурации определяются параметром <see cref="searchPatterns"/>
+        /// Файлы конфигурации определяются параметром <paramref name="searchPatterns"/>
         /// </summary>
         /// <param name="builder">ConfigurationBuilder в который добавляются конфигурации.</param>
         /// <param name="configurationPath">Директория для поиска файлов конфигурации.</param>

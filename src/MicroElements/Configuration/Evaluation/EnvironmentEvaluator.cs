@@ -15,9 +15,10 @@ namespace MicroElements.Configuration.Evaluation
         public EvaluatorInfo Info => new EvaluatorInfo("environment", 10);
 
         /// <inheritdoc />
-        public string Evaluate(string key, string expression)
+        EvaluationResult IValueEvaluator.Evaluate(EvaluationContext context)
         {
-            return Environment.GetEnvironmentVariable(expression);
+            string value = Environment.GetEnvironmentVariable(context.Expression);
+            return EvaluationResult.Create(context, value);
         }
     }
 }

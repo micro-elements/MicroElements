@@ -1,3 +1,6 @@
+# 2.2.0
+- Breaking: Changed IEvaluator interface to support recursion in context dependent evaluators
+
 # 2.1.0
 - Breaking: Added IEvaluator.EvaluatorInfo property instead Name
 - Ordering evaluators
@@ -17,7 +20,7 @@
 # 1.6.0
 - IsSecretConfigurationKey added to StartupConfiguration
 - ILogger and ILoggerFactory added to IBuildContext
-- Evaluators can be set to ConfigurationBuilder.Properties for usin in include blocks
+- Evaluators can be set to ConfigurationBuilder.Properties for using in include blocks
 
 # 1.5.0
 - Limited support of placeholders for ${include}
