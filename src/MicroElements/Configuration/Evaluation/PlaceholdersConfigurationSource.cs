@@ -1,7 +1,7 @@
 ﻿// Copyright (c) MicroElements. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
+using MicroElements.Abstractions;
 using Microsoft.Extensions.Configuration;
 
 namespace MicroElements.Configuration.Evaluation
@@ -11,24 +11,26 @@ namespace MicroElements.Configuration.Evaluation
     /// </summary>
     public class PlaceholdersConfigurationSource : IConfigurationSource
     {
-        private readonly IConfigurationRoot _configurationRoot;
-        private readonly IEnumerable<IValueEvaluator> _evaluators;
+        private readonly BuildContext _buildContext;
+        private readonly IConfigurationBuilder _configurationBuilder;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlaceholdersConfigurationSource"/> class.
         /// </summary>
-        /// <param name="configurationRoot">Корень конфигурации.</param>
-        /// <param name="evaluators">Вычислители значений.</param>
-        public PlaceholdersConfigurationSource(IConfigurationRoot configurationRoot, IEnumerable<IValueEvaluator> evaluators)
+        /// <param name="buildContext">Корень конфигурации.</param>
+        /// <param name="configurationBuilder">Вычислители значений.</param>
+        public PlaceholdersConfigurationSource(BuildContext buildContext, IConfigurationBuilder configurationBuilder)
         {
-            _configurationRoot = configurationRoot;
-            _evaluators = evaluators;
+            _buildContext = buildContext;
+            _configurationBuilder = configurationBuilder;
         }
 
         /// <inheritdoc />
         public IConfigurationProvider Build(IConfigurationBuilder builder)
         {
-            return new PlaceholdersConfigurationProvider(_configurationRoot, _evaluators);
+            IConfigurationRoot firstIteration = _configurationBuilder.Build();
+            var evaluators = ValueEvaluator.CreateValueEvaluators(_buildContext, firstIteration);
+            return new PlaceholdersConfigurationProvider(firstIteration, evaluators);
         }
     }
 }

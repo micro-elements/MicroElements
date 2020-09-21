@@ -1,3 +1,6 @@
+# 2.3.0
+- PlaceholdersConfigurationSource do not caches configuration (rebuilds on each build)
+
 # 2.2.0
 - Breaking: Changed IEvaluator interface to support recursion in context dependent evaluators
 

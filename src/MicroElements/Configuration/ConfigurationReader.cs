@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MicroElements.Abstractions;
@@ -55,14 +54,29 @@ namespace MicroElements.Configuration
             }
 
             // (Step1) Построение конфигурации
-            var preprocessedConfiguration = builder.Build();
+            IConfigurationBuilder builderCopy = builder.CopyConfigurationBuilder();
 
             // Для вычисления Placeholders.
-            IEnumerable<IValueEvaluator> valueEvaluators = ValueEvaluator.CreateValueEvaluators(buildContext, preprocessedConfiguration);
-            builder.Add(new PlaceholdersConfigurationSource(preprocessedConfiguration, valueEvaluators));
+            builder.Add(new PlaceholdersConfigurationSource(buildContext, builderCopy));
 
             // (Step2) Повторное построение, чтобы рассчитать вычисляемые значения.
             buildContext.ConfigurationRoot = builder.Build();
+        }
+
+        public static IConfigurationBuilder CopyConfigurationBuilder(this IConfigurationBuilder builder)
+        {
+            IConfigurationBuilder builderCopy = new ConfigurationBuilder();
+            foreach (var pair in builder.Properties)
+            {
+                builderCopy.Properties.Add(pair.Key, pair.Value);
+            }
+
+            foreach (IConfigurationSource source in builder.Sources)
+            {
+                builderCopy.Add(source);
+            }
+
+            return builderCopy;
         }
 
         /// <summary>
