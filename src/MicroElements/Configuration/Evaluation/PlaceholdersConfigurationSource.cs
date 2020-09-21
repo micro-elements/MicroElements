@@ -17,8 +17,8 @@ namespace MicroElements.Configuration.Evaluation
         /// <summary>
         /// Initializes a new instance of the <see cref="PlaceholdersConfigurationSource"/> class.
         /// </summary>
-        /// <param name="buildContext">Корень конфигурации.</param>
-        /// <param name="configurationBuilder">Вычислители значений.</param>
+        /// <param name="buildContext">Build context.</param>
+        /// <param name="configurationBuilder">ConfigurationBuilder for initial configuration.</param>
         public PlaceholdersConfigurationSource(BuildContext buildContext, IConfigurationBuilder configurationBuilder)
         {
             _buildContext = buildContext;
@@ -28,9 +28,7 @@ namespace MicroElements.Configuration.Evaluation
         /// <inheritdoc />
         public IConfigurationProvider Build(IConfigurationBuilder builder)
         {
-            IConfigurationRoot firstIteration = _configurationBuilder.Build();
-            var evaluators = ValueEvaluator.CreateValueEvaluators(_buildContext, firstIteration);
-            return new PlaceholdersConfigurationProvider(firstIteration, evaluators);
+            return new PlaceholdersConfigurationProvider(_buildContext, _configurationBuilder);
         }
     }
 }

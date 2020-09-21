@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MicroElements.Abstractions;
 using Microsoft.Extensions.Configuration;
 
 namespace MicroElements.Configuration.Evaluation
@@ -13,21 +14,33 @@ namespace MicroElements.Configuration.Evaluation
     /// </summary>
     public class PlaceholdersConfigurationProvider : ConfigurationProvider
     {
-        private readonly IConfigurationRoot _configurationRoot;
-        private readonly IReadOnlyCollection<IValueEvaluator> _evaluators;
-        private readonly Dictionary<string, string> _propertiesWithPlaceholders;
+        private readonly BuildContext _buildContext;
+        private readonly IConfigurationBuilder _configurationBuilder;
+
+        private IConfigurationRoot _configurationRoot;
+        private IReadOnlyCollection<IValueEvaluator> _evaluators;
+
+        private Dictionary<string, string> _propertiesWithPlaceholders;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlaceholdersConfigurationProvider"/> class.
         /// </summary>
-        /// <param name="configurationRoot">Корень конфигурации.</param>
-        /// <param name="evaluators">Список вычислителей.</param>
-        public PlaceholdersConfigurationProvider(IConfigurationRoot configurationRoot, IEnumerable<IValueEvaluator> evaluators)
+        /// <param name="buildContext">Build context.</param>
+        /// <param name="configurationBuilder">ConfigurationBuilder for initial configuration.</param>
+        public PlaceholdersConfigurationProvider(BuildContext buildContext, IConfigurationBuilder configurationBuilder)
         {
-            _configurationRoot = configurationRoot;
-            _evaluators = evaluators.OrderBy(evaluator => evaluator.Info.Order).ToArray();
+            _buildContext = buildContext;
+            _configurationBuilder = configurationBuilder;
+        }
 
-            _propertiesWithPlaceholders = GetPropertiesWithPlaceholders(configurationRoot);
+        /// <inheritdoc />
+        public override void Load()
+        {
+            _configurationRoot = _configurationBuilder.Build();
+            _evaluators = ValueEvaluator.CreateValueEvaluators(_buildContext, _configurationRoot).OrderBy(evaluator => evaluator.Info.Order).ToArray();
+
+            _propertiesWithPlaceholders = GetPropertiesWithPlaceholders(_configurationRoot);
+            base.Load();
         }
 
         /// <inheritdoc />
