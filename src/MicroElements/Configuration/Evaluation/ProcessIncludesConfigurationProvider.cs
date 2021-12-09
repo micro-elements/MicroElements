@@ -60,7 +60,6 @@ namespace MicroElements.Configuration.Evaluation
                         if (shouldLoad)
                         {
                             var childProvider = LoadIncludedConfiguration(includePath);
-
                             LoadRecursive(childProvider, targetDictionary);
                         }
                     }
@@ -82,15 +81,15 @@ namespace MicroElements.Configuration.Evaluation
             jsonConfigurationProvider.Load();
 
             return jsonConfigurationProvider;
-        }
 
-        private static IConfigurationProvider CreateConfigurationProvider(string fullPath)
-        {
-            // todo: Можно расширить виды поддерживаемых провайдеров
-            var jsonConfigurationSource = new JsonConfigurationSource { Path = fullPath };
-            jsonConfigurationSource.ResolveFileProvider();
-            var jsonConfigurationProvider = new JsonConfigurationProvider(jsonConfigurationSource);
-            return jsonConfigurationProvider;
+            static IConfigurationProvider CreateConfigurationProvider(string fullPath)
+            {
+                // todo: Можно расширить виды поддерживаемых провайдеров
+                var jsonConfigurationSource = new JsonConfigurationSource { Path = fullPath };
+                jsonConfigurationSource.ResolveFileProvider();
+                var jsonConfigurationProvider = new JsonConfigurationProvider(jsonConfigurationSource);
+                return jsonConfigurationProvider;
+            }
         }
     }
 }
