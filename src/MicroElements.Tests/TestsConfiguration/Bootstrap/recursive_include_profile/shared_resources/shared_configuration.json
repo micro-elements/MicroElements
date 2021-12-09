@@ -1,0 +1,5 @@
+{
+    "${include}": [
+        "../shared_resources/shared_configuration.${environment:profile}.json"
+    ]
+}
