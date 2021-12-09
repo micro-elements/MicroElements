@@ -61,11 +61,7 @@ namespace MicroElements.Configuration.Evaluation
                         {
                             var childProvider = LoadIncludedConfiguration(includePath);
 
-                            // Получим все ключи
-                            var keysToInclude = childProvider.GetKeys();
-
-                            // Добавим все данные из подгруженного файла
-                            childProvider.CopyValuesToDictionary(keysToInclude, targetDictionary);
+                            LoadRecursive(childProvider, targetDictionary);
                         }
                     }
                 }
