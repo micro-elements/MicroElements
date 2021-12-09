@@ -38,9 +38,13 @@ namespace MicroElements.Configuration.Evaluation
         public override void Load(Stream stream)
         {
             _configurationProvider.Load(stream);
+            LoadRecursive(_configurationProvider, Data);
+        }
 
+        private void LoadRecursive(IConfigurationProvider provider, IDictionary<string, string> targetDictionary)
+        {
             // Получим список ключей
-            var keys = _configurationProvider.GetKeys();
+            var keys = provider.GetKeys();
 
             // ${include}, ${include}:0, ...
             static bool IsIncludeKey(string key) => key.StartsWith("${include}");
@@ -49,17 +53,17 @@ namespace MicroElements.Configuration.Evaluation
             {
                 if (IsIncludeKey(key))
                 {
-                    if (_configurationProvider.TryGet(key, out string includePath))
+                    if (provider.TryGet(key, out string includePath))
                     {
                         includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
                         bool shouldLoad = !string.IsNullOrWhiteSpace(includePath);
                         if (shouldLoad)
-                            LoadIncludedConfiguration(includePath, Data);
+                            LoadIncludedConfiguration(includePath, targetDictionary);
                     }
                 }
                 else
                 {
-                    _configurationProvider.CopyValueToDictionary(key, Data);
+                    provider.CopyValueToDictionary(key, targetDictionary);
                 }
             }
         }
