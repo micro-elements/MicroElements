@@ -43,7 +43,7 @@ namespace MicroElements.Configuration.Evaluation
             var keys = _configurationProvider.GetKeys();
 
             // ${include}, ${include}:0, ...
-            bool IsIncludeKey(string key) => key.StartsWith("${include}");
+            static bool IsIncludeKey(string key) => key.StartsWith("${include}");
 
             foreach (string key in keys)
             {
