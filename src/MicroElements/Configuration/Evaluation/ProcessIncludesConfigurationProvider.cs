@@ -51,17 +51,14 @@ namespace MicroElements.Configuration.Evaluation
 
             foreach (string key in keys)
             {
-                if (IsIncludeKey(key))
+                if (IsIncludeKey(key) && provider.TryGet(key, out string includePath))
                 {
-                    if (provider.TryGet(key, out string includePath))
+                    includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
+                    bool shouldLoad = !string.IsNullOrWhiteSpace(includePath);
+                    if (shouldLoad)
                     {
-                        includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
-                        bool shouldLoad = !string.IsNullOrWhiteSpace(includePath);
-                        if (shouldLoad)
-                        {
-                            var childProvider = LoadIncludedConfiguration(includePath);
-                            LoadRecursive(childProvider, targetDictionary);
-                        }
+                        var childProvider = LoadIncludedConfiguration(includePath);
+                        LoadRecursive(childProvider, targetDictionary);
                     }
                 }
                 else
