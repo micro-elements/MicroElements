@@ -58,7 +58,15 @@ namespace MicroElements.Configuration.Evaluation
                         includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
                         bool shouldLoad = !string.IsNullOrWhiteSpace(includePath);
                         if (shouldLoad)
-                            LoadIncludedConfiguration(includePath, targetDictionary);
+                        {
+                            var childProvider = LoadIncludedConfiguration(includePath);
+
+                            // Получим все ключи
+                            var keysToInclude = childProvider.GetKeys();
+
+                            // Добавим все данные из подгруженного файла
+                            childProvider.CopyValuesToDictionary(keysToInclude, targetDictionary);
+                        }
                     }
                 }
                 else
@@ -68,7 +76,7 @@ namespace MicroElements.Configuration.Evaluation
             }
         }
 
-        private void LoadIncludedConfiguration(string includePath, IDictionary<string, string> targetDictionary)
+        private IConfigurationProvider LoadIncludedConfiguration(string includePath)
         {
             var path = Path.Combine(_rootPath, includePath);
             var fullPath = Path.GetFullPath(path);
@@ -77,11 +85,7 @@ namespace MicroElements.Configuration.Evaluation
             var jsonConfigurationProvider = CreateConfigurationProvider(fullPath);
             jsonConfigurationProvider.Load();
 
-            // Получим все ключи
-            var keysToInclude = jsonConfigurationProvider.GetKeys();
-
-            // Добавим все данные из подгруженного файла
-            jsonConfigurationProvider.CopyValuesToDictionary(keysToInclude, targetDictionary);
+            return jsonConfigurationProvider;
         }
 
         private static IConfigurationProvider CreateConfigurationProvider(string fullPath)
