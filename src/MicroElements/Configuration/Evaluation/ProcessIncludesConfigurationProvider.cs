@@ -38,33 +38,37 @@ namespace MicroElements.Configuration.Evaluation
         public override void Load(Stream stream)
         {
             _configurationProvider.Load(stream);
+            LoadRecursive(_configurationProvider, Data, new HashSet<string>());
+        }
 
+        private void LoadRecursive(IConfigurationProvider provider, IDictionary<string, string> targetDictionary, HashSet<string> includedFiles)
+        {
             // Получим список ключей
-            var keys = _configurationProvider.GetKeys();
+            var keys = provider.GetKeys();
 
             // ${include}, ${include}:0, ...
-            bool IsIncludeKey(string key) => key.StartsWith("${include}");
+            static bool IsIncludeKey(string key) => key.StartsWith("${include}");
 
             foreach (string key in keys)
             {
-                if (IsIncludeKey(key))
+                if (IsIncludeKey(key) && provider.TryGet(key, out string includePath))
                 {
-                    if (_configurationProvider.TryGet(key, out string includePath))
+                    includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
+
+                    if (!string.IsNullOrWhiteSpace(includePath) && includedFiles.Add(includePath))
                     {
-                        includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
-                        bool shouldLoad = !string.IsNullOrWhiteSpace(includePath);
-                        if (shouldLoad)
-                            LoadIncludedConfiguration(includePath, Data);
+                        var childProvider = LoadIncludedConfiguration(includePath);
+                        LoadRecursive(childProvider, targetDictionary, includedFiles);
                     }
                 }
                 else
                 {
-                    _configurationProvider.CopyValueToDictionary(key, Data);
+                    provider.CopyValueToDictionary(key, targetDictionary);
                 }
             }
         }
 
-        private void LoadIncludedConfiguration(string includePath, IDictionary<string, string> targetDictionary)
+        private IConfigurationProvider LoadIncludedConfiguration(string includePath)
         {
             var path = Path.Combine(_rootPath, includePath);
             var fullPath = Path.GetFullPath(path);
@@ -73,20 +77,16 @@ namespace MicroElements.Configuration.Evaluation
             var jsonConfigurationProvider = CreateConfigurationProvider(fullPath);
             jsonConfigurationProvider.Load();
 
-            // Получим все ключи
-            var keysToInclude = jsonConfigurationProvider.GetKeys();
-
-            // Добавим все данные из подгруженного файла
-            jsonConfigurationProvider.CopyValuesToDictionary(keysToInclude, targetDictionary);
-        }
-
-        private static IConfigurationProvider CreateConfigurationProvider(string fullPath)
-        {
-            // todo: Можно расширить виды поддерживаемых провайдеров
-            var jsonConfigurationSource = new JsonConfigurationSource { Path = fullPath };
-            jsonConfigurationSource.ResolveFileProvider();
-            var jsonConfigurationProvider = new JsonConfigurationProvider(jsonConfigurationSource);
             return jsonConfigurationProvider;
+
+            static IConfigurationProvider CreateConfigurationProvider(string fullPath)
+            {
+                // todo: Можно расширить виды поддерживаемых провайдеров
+                var jsonConfigurationSource = new JsonConfigurationSource { Path = fullPath };
+                jsonConfigurationSource.ResolveFileProvider();
+                var jsonConfigurationProvider = new JsonConfigurationProvider(jsonConfigurationSource);
+                return jsonConfigurationProvider;
+            }
         }
     }
 }

@@ -1,0 +1,11 @@
+{
+    "${include}": [
+        "../shared_resources/shared_configuration.json"
+    ],
+    
+    "Configuration": {
+        "SampleOptions": {
+            "Value": "SampleOptions.Value"
+        }
+    }
+}

@@ -154,6 +154,27 @@ namespace MicroElements.Tests
             sampleOptions.Value.Should().BeEquivalentTo("OverridenByProfile2");
             sampleOptions.OptionalValue.Should().BeEquivalentTo("OptionalValueFromCommonWithProfile2");
         }
+        
+        [Test(Description = "Чтение конфигурации с рекурсивным переопределением через профиль и подпрофиль")]
+        public void ReadConfigurationWithRecursiveInclude()
+        {
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Bootstrap/recursive_include_profile/entry_point",
+                Profile = "production"
+            };
+            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var sampleOptions = serviceProvider.GetService<SampleOptions>();
+            
+            sampleOptions
+                .Should()
+                .BeEquivalentTo(
+                    new SampleOptions
+                    {
+                        Value = "SampleOptions.Value", 
+                        SharedValue = "SampleOptions.SharedValue"
+                    });
+        }
 
         [Test]
         public void ConfigurationPathCanBeNull()
