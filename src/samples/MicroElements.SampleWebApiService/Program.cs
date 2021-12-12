@@ -5,6 +5,7 @@ using MicroElements.Bootstrap;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace MicroElements.SampleWebApiService
@@ -71,7 +72,6 @@ namespace MicroElements.SampleWebApiService
                 // todo: интеграция с AspNetCore EnvironmentName
                 context.HostingEnvironment.EnvironmentName = startupConfiguration.Profile;
             });
-            hostBuilder.UseApplicationInsights();//вместо этого можно использовать serviceCollection.Add with IConfiguration
 
             hostBuilder.ConfigureServices(collection => ConfigureServices(hostBuilder, collection, startupConfiguration));
 

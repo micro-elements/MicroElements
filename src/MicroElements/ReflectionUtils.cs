@@ -4,11 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using MicroElements.Abstractions;
-using MicroElements.Bootstrap;
+using MicroElements.Collections.Extensions;
+using MicroElements.Reflection;
 
 namespace MicroElements
 {
@@ -25,18 +24,16 @@ namespace MicroElements
         /// <returns>Assemblies.</returns>
         public static IEnumerable<Assembly> LoadAssemblies(string scanDirectory, params string[] assemblyScanPatterns)
         {
-            string WildcardToRegex(string pat) => "^" + Regex.Escape(pat).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
-            bool FileNameMatchesPattern(string filename, string pattern) => Regex.IsMatch(Path.GetFileName(filename) ?? string.Empty, WildcardToRegex(pattern));
+            List<string> messagesList = new List<string>();
 
-            var domainAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var resultFromAppDomain = domainAssemblies.Where(asm => assemblyScanPatterns.Any(pattern => FileNameMatchesPattern(asm.FullName, pattern)));
+            AssemblySource assemblySource = new AssemblySource(
+                loadFromDomain: true,
+                loadFromDirectory: scanDirectory,
+                searchPatterns: assemblyScanPatterns);
 
-            var assemblies = Directory.EnumerateFiles(scanDirectory, "*.dll", SearchOption.TopDirectoryOnly)
-                .Concat(Directory.EnumerateFiles(scanDirectory, "*.exe", SearchOption.TopDirectoryOnly))
-                .Where(filename => assemblyScanPatterns.Any(pattern => FileNameMatchesPattern(filename, pattern)))
-                .Select(Assembly.LoadFrom)
-                .Union(resultFromAppDomain)
-                .Distinct();
+            IEnumerable<Assembly> assemblies = TypeLoader
+                .LoadAssemblies(assemblySource, messagesList)
+                .ToArrayDebug();
 
             return assemblies;
         }

@@ -1,3 +1,8 @@
+# 3.0.0
+- netstandard bumped to netstandard 2.1
+- MicroElements.Reflection.Sources replaced internal reflection stuff
+- PR#9 recursive ${include} from @i00lii
+
 # 2.3.0
 - PlaceholdersConfigurationSource do not caches configuration (rebuilds on each build)
 

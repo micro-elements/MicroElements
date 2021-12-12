@@ -179,7 +179,6 @@ namespace MicroElements.Bootstrap
             var logger = buildContext.Logger;
 
             StartupConfiguration startupConfiguration = buildContext.StartupConfiguration;
-            ILoggerFactory loggerFactory = buildContext.LoggerFactory;
             var configurationRoot = buildContext.ConfigurationRoot;
             var services = buildContext.ServiceCollection;
 
@@ -190,7 +189,7 @@ namespace MicroElements.Bootstrap
             services.AddOptions();
 
             // Logging
-            services.RegisterLogging(loggerFactory);
+            services.RegisterLogging(buildContext.LoggerFactory);
 
             // Регистрируем строготипизированные конфигурации.
             services.RegisterConfigurationTypes(configurationRoot, buildContext.ExportedTypes, startupConfiguration);
