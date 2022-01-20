@@ -58,7 +58,7 @@ namespace MicroElements.Configuration.Evaluation
             return configurationRoot
                 .GetAllValues()
                 .Where(pair => pair.Value != null && pair.Value.HasPlaceholderFor(_evaluators))
-                .ToDictionary(pair => pair.Key, pair => pair.Value);
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
         }
     }
 

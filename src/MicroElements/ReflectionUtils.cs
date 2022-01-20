@@ -29,7 +29,8 @@ namespace MicroElements
             AssemblySource assemblySource = new AssemblySource(
                 loadFromDomain: true,
                 loadFromDirectory: scanDirectory,
-                searchPatterns: assemblyScanPatterns);
+                searchPatterns: assemblyScanPatterns,
+                assemblyFilters: new AssemblyFilters(assemblyScanPatterns));
 
             IEnumerable<Assembly> assemblies = TypeLoader
                 .LoadAssemblies(assemblySource, messagesList)
