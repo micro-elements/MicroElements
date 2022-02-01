@@ -1,3 +1,6 @@
+# 3.1.0
+- CreateDirectory for LogsPath was removed from startup because it's not cloud ready
+
 # 3.0.0
 - netstandard bumped to netstandard 2.1
 - MicroElements.Reflection.Sources replaced internal reflection stuff

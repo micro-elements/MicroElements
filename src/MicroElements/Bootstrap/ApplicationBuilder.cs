@@ -53,10 +53,7 @@ namespace MicroElements.Bootstrap
                 startupConfiguration.BuildUpFromCommandLineArgs(startupConfiguration.CommandLineArgs.Args);
             }
 
-            Environment.SetEnvironmentVariable("LogsPath", startupConfiguration.LogsPath, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("ConfigurationPath", startupConfiguration.ConfigurationPath, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("Profile", startupConfiguration.Profile, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable("InstanceId", startupConfiguration.InstanceId, EnvironmentVariableTarget.Process);
+            SetEnvVariables(startupConfiguration);
 
             // Can use defined service collection or create new
             _buildContext.ServiceCollection = startupConfiguration.ServiceCollection ?? new ServiceCollection();
@@ -64,11 +61,6 @@ namespace MicroElements.Bootstrap
 
             using (measureSession.StartTimer("ConfigureLogging"))
             {
-                // Установка путей логирования, создание и блокирование pid-файла
-                // todo: UseCentralizedLogging
-                var unlocker = LoggingExtensions.SetupLogsPath(startupConfiguration);
-                serviceCollection.AddSingleton(unlocker);
-
                 // Получение сконфигурированной фабрики логирования.
                 var configureLogging = startupConfiguration.ConfigureLogging ?? DefaultLogging.ConfigureLogging;
                 _buildContext.LoggerFactory = configureLogging();
@@ -168,6 +160,21 @@ namespace MicroElements.Bootstrap
             measureSession.LogMeasures(_buildContext.Logger);
 
             return buildContext;
+        }
+
+        public static void SetEnvVariables(StartupConfiguration configuration)
+        {
+            var fullLogsPath = Path.IsPathRooted(configuration.LogsPath)
+                ? configuration.LogsPath
+                : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configuration.LogsPath);
+
+            var flatProfileName = configuration.Profile?.CleanFileName().Replace(Path.DirectorySeparatorChar, '_');
+
+            Environment.SetEnvironmentVariable("LogsPath", fullLogsPath, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("ProfileName", flatProfileName, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("Profile", configuration.Profile, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("ConfigurationPath", configuration.ConfigurationPath, EnvironmentVariableTarget.Process);
+            Environment.SetEnvironmentVariable("InstanceId", configuration.InstanceId, EnvironmentVariableTarget.Process);
         }
 
         /// <summary>
