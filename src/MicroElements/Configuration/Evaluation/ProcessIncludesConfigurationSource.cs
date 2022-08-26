@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
 
 namespace MicroElements.Configuration.Evaluation
 {
@@ -12,22 +11,22 @@ namespace MicroElements.Configuration.Evaluation
     /// </summary>
     public class ProcessIncludesConfigurationSource : IConfigurationSource
     {
-        private readonly JsonConfigurationSource _jsonConfigurationSource;
+        private readonly IConfigurationSource _configurationSource;
         private readonly string _rootPath;
         private readonly IReadOnlyCollection<IValueEvaluator> _valueEvaluators;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProcessIncludesConfigurationSource"/> class.
         /// </summary>
-        /// <param name="jsonConfigurationSource">jsonConfigurationSource</param>
+        /// <param name="configurationSource">The original <see cref="IConfigurationSource"/>.</param>
         /// <param name="rootPath">rootPath</param>
         /// <param name="valueEvaluators">Evaluator that can be used in include.</param>
         public ProcessIncludesConfigurationSource(
-            JsonConfigurationSource jsonConfigurationSource,
+            IConfigurationSource configurationSource,
             string rootPath,
             IReadOnlyCollection<IValueEvaluator> valueEvaluators = null)
         {
-            _jsonConfigurationSource = jsonConfigurationSource;
+            _configurationSource = configurationSource;
             _rootPath = rootPath;
             _valueEvaluators = valueEvaluators;
         }
@@ -35,7 +34,7 @@ namespace MicroElements.Configuration.Evaluation
         /// <inheritdoc />
         public IConfigurationProvider Build(IConfigurationBuilder builder)
         {
-            FileConfigurationProvider fileConfigurationProvider = (FileConfigurationProvider)_jsonConfigurationSource.Build(builder);
+            IConfigurationProvider fileConfigurationProvider = _configurationSource.Build(builder);
             return new ProcessIncludesConfigurationProvider(fileConfigurationProvider, _rootPath, _valueEvaluators);
         }
     }
