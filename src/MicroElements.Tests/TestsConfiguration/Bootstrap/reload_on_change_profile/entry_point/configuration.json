@@ -1,0 +1,13 @@
+{
+    "${include}": [
+        "../shared_resources/included_configuration.json",
+        "../shared_resources/placeholders.json"
+    ],
+    
+    "Configuration": {
+        "SampleOptions": {
+            "Value": "SampleOptions.Value",
+            "OptionalValue": "${configurationValue:Placeholders:OptionalValue}"
+        }
+    }
+}
