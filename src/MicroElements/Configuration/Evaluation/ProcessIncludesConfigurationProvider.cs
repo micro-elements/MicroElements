@@ -65,7 +65,7 @@ namespace MicroElements.Configuration.Evaluation
             {
                 if (IsIncludeKey(key) && provider.TryGet(key, out string includePath))
                 {
-                    includePath = SimpleExpressionParser.ParseAndRender(includePath, _valueEvaluators) ?? includePath;
+                    includePath = SimpleExpressionParser.ParseAndRender(key, includePath, _valueEvaluators) ?? includePath;
 
                     if (!string.IsNullOrWhiteSpace(includePath) && !includedFiles.ContainsKey(includePath))
                     {

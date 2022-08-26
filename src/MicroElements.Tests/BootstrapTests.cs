@@ -439,20 +439,20 @@ namespace MicroElements.Tests
             };
 
             SimpleExpressionParser
-                .ParseAndRender("${eval1:Prop1}_${eval1:Prop2}", evaluators)
+                .ParseAndRender(default, "${eval1:Prop1}_${eval1:Prop2}", evaluators)
                 .Should().Be("Value1_Value2");
 
             SimpleExpressionParser
-                .ParseAndRender("${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
+                .ParseAndRender(default, "${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
                 .Should().Be("Success");
 
             evaluators = evaluators.Reverse().ToArray();
             SimpleExpressionParser
-                .ParseAndRender("${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
+                .ParseAndRender(default, "${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
                 .Should().Be("Success");
 
             SimpleExpressionParser
-                .ParseAndRender("${eval1:${eval2:${eval1:Prop1}_${eval1:Prop2}}}", evaluators)
+                .ParseAndRender(default, "${eval1:${eval2:${eval1:Prop1}_${eval1:Prop2}}}", evaluators)
                 .Should().Be("Success!");
         }
 
@@ -466,7 +466,7 @@ namespace MicroElements.Tests
             };
 
             SimpleExpressionParser
-                .ParseAndRender("${eval1:Prop1", evaluators)
+                .ParseAndRender(default, "${eval1:Prop1", evaluators)
                 .Should().Be("${eval1:Prop1");
         }
 
