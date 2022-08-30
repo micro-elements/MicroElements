@@ -1,3 +1,7 @@
+# 3.2.0
+- PR#11 reload on change for placeholders from @i00lii
+- minor changes
+
 # 3.1.0
 - CreateDirectory for LogsPath was removed from startup because it's not cloud ready
 

@@ -14,7 +14,7 @@ using Microsoft.Extensions.Configuration.Json;
 namespace MicroElements.Configuration
 {
     /// <summary>
-    /// Расширения для <see cref="Microsoft.Extensions.Configuration"/>.
+    /// Extensions for <see cref="Microsoft.Extensions.Configuration"/>.
     /// </summary>
     public static class ConfigurationReader
     {
@@ -27,7 +27,7 @@ namespace MicroElements.Configuration
             var startupConfiguration = buildContext.StartupConfiguration;
 
             // Настройка чтения конфигураций
-            IConfigurationBuilder builder = buildContext.StartupConfiguration.ConfigurationBuilder ?? new ConfigurationBuilder();
+            IConfigurationBuilder builder = startupConfiguration.ConfigurationBuilder ?? new ConfigurationBuilder();
 
             // Добавляем начальное пользовательское конфигурирование.
             if (startupConfiguration.BeginConfiguration != null)
@@ -38,11 +38,13 @@ namespace MicroElements.Configuration
             // Вычислители без контекста
             var evaluators = builder.Properties.GetValue(BuilderContext.Key.StatelessEvaluators);
             if (evaluators == null)
+            {
                 evaluators = ValueEvaluator.CreateValueEvaluators(buildContext, null, statelessEvaluators: true).ToArray();
-            builder.Properties.SetValue(BuilderContext.Key.StatelessEvaluators, evaluators);
+                builder.Properties.SetValue(BuilderContext.Key.StatelessEvaluators, evaluators);
+            }
 
             // Добавляем стандартное конфигурирование из файловой директории.
-            AddFileConfiguration(buildContext, builder);
+            AddFileConfiguration(builder, buildContext);
 
             // Параметры командной строки перекрывают все.
             builder = builder.AddCommandLine(startupConfiguration.CommandLineArgs?.Args ?? new string[0]);
@@ -87,28 +89,37 @@ namespace MicroElements.Configuration
         /// <param name="configurationPath">Директория для поиска файлов конфигурации.</param>
         /// <param name="searchPatterns">Паттерны для поиска файлов.</param>
         /// <returns>Итоговый ConfigurationBuilder.</returns>
-        public static IConfigurationBuilder AddConfigurationFiles(this IConfigurationBuilder builder, string configurationPath, string[] searchPatterns)
+        public static IConfigurationBuilder AddConfigurationFiles(this IConfigurationBuilder builder, string configurationPath, string[]? searchPatterns = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
+            searchPatterns ??= new[] { "*.json" };
+
             foreach (var searchPattern in searchPatterns)
             {
                 foreach (var file in Directory.EnumerateFiles(configurationPath, searchPattern, SearchOption.TopDirectoryOnly))
                 {
                     var extension = Path.GetExtension(file)?.ToLower();
-                    if (extension == ".xml")
-                    {
-                        builder = builder.AddXmlFile(file, optional: false, reloadOnChange: true);
-                    }
 
                     if (extension == ".json")
                     {
-                        // Создадим провайдер Json и обернем его в свой декоратор.
-                        var jsonConfigurationSource = new JsonConfigurationSource { Path = file.PathNormalize(), Optional = false, ReloadOnChange = true };
+                        // JsonConfigurationSource with include support.
+                        var jsonConfigurationSource = new JsonConfigurationSource
+                        {
+                            Path = file.PathNormalize(),
+                            Optional = false,
+                            ReloadOnChange = true,
+                        };
+
                         jsonConfigurationSource.ResolveFileProvider();
+                        if (jsonConfigurationSource.FileProvider is null)
+                        {
+                            jsonConfigurationSource.FileProvider = builder.GetFileProvider();
+                        }
+
                         var statelessEvaluators = builder.Properties.GetValue(BuilderContext.Key.StatelessEvaluators) ?? Array.Empty<IValueEvaluator>();
                         builder.Add(new ProcessIncludesConfigurationSource(jsonConfigurationSource, configurationPath.PathNormalize(), statelessEvaluators));
                     }
@@ -118,19 +129,7 @@ namespace MicroElements.Configuration
             return builder;
         }
 
-        /// <summary>
-        /// Добавление всех конфигурационных файлов в конфигурацию.
-        /// В выборку попадают все xml и json файлы.
-        /// </summary>
-        /// <param name="builder">ConfigurationBuilder в который добавляются конфигурации.</param>
-        /// <param name="configurationPath">Директория для поиска файлов конфигурации.</param>
-        /// <returns>Итоговый ConfigurationBuilder.</returns>
-        public static IConfigurationBuilder AddConfigurationFiles(this IConfigurationBuilder builder, string configurationPath)
-        {
-            return builder.AddConfigurationFiles(configurationPath, new[] { "*.json", "*.xml" });
-        }
-
-        private static void AddFileConfiguration(BuildContext buildContext, IConfigurationBuilder builder)
+        public static void AddFileConfiguration(this IConfigurationBuilder builder, BuildContext buildContext)
         {
             var startupConfiguration = buildContext.StartupConfiguration;
 
@@ -139,17 +138,17 @@ namespace MicroElements.Configuration
 
             if (configurationPath != null)
             {
-                // Базовый путь для чтения конфигураций
+                // Base path (full directory name)
                 var configurationBasePath = Path.IsPathRooted(configurationPath)
                     ? configurationPath
-                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, configurationPath);
+                    : Path.Combine(AppContext.BaseDirectory, configurationPath);
 
                 if (!Directory.Exists(configurationBasePath))
                     throw new Exception($"ConfigurationBasePath ${configurationBasePath} doesn't exists");
 
-                buildContext.AddBuildInfo("ConfigurationBasePath", configurationBasePath);
+                builder.AddEnvInfo("ConfigurationBasePath", configurationBasePath);
 
-                // Добавляем файлы из корня конфигурации, переопределяем конфигурацию профильными конфигами
+                // Add files from base path.
                 builder = builder.AddConfigurationFiles(configurationBasePath);
 
                 if (!string.IsNullOrEmpty(configurationProfile))
@@ -173,9 +172,11 @@ namespace MicroElements.Configuration
                         }
                     }
 
-                    buildContext.AddBuildInfo("ConfigurationProfileDirectory", profileDirectory);
+                    builder.AddEnvInfo("ConfigurationProfileDirectory", profileDirectory);
                 }
             }
         }
+        
+
     }
 }

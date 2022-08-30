@@ -49,18 +49,5 @@ namespace MicroElements.Bootstrap
         /// Основной логгер для процесса инициализации.
         /// </summary>
         ILogger Logger { get; }
-
-        /// <summary>
-        /// Adds build info.
-        /// </summary>
-        /// <param name="name">Name.</param>
-        /// <param name="value">Value.</param>
-        void AddBuildInfo(string name, string value);
-
-        /// <summary>
-        /// Gets build info.
-        /// </summary>
-        /// <returns>Build info.</returns>
-        IReadOnlyCollection<KeyValuePair<string, string>> GetBuildInfo();
     }
 }

@@ -67,16 +67,6 @@ namespace MicroElements.Abstractions
         /// </summary>
         public List<KeyValuePair<string, string>> BuildInfo { get; set; } = new List<KeyValuePair<string, string>>();
 
-        public void AddBuildInfo(string name, string value)
-        {
-            BuildInfo.Add(new KeyValuePair<string, string>(name, value));
-        }
-
-        public IReadOnlyCollection<KeyValuePair<string, string>> GetBuildInfo()
-        {
-            return BuildInfo;
-        }
-
         /// <inheritdoc />
         public object GetService(Type serviceType)
         {

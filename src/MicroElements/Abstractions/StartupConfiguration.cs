@@ -74,32 +74,32 @@ namespace MicroElements.Bootstrap
         /// <summary>
         /// Коллекция сервисов <see cref="IServiceCollection"/> используется для конфигурирования контейнера.
         /// </summary>
-        public IServiceCollection ServiceCollection { get; set; }
+        public IServiceCollection? ServiceCollection { get; set; }
 
         /// <summary>
         /// Билдер конфигурации.
         /// </summary>
-        public IConfigurationBuilder ConfigurationBuilder { get; set; }
+        public IConfigurationBuilder? ConfigurationBuilder { get; set; }
 
         /// <summary>
         /// Действие, позволяющее добавить свою логику конфигурации в начало конфигурирования конфигурации.
         /// </summary>
-        public Func<IConfigurationBuilder, IConfigurationBuilder> BeginConfiguration { get; set; }
+        public Func<IConfigurationBuilder, IConfigurationBuilder>? BeginConfiguration { get; set; }
 
         /// <summary>
         /// Действие, позволяющее добавить свою логику конфигурации в конец конфигурирования конфигурации.
         /// </summary>
-        public Func<IConfigurationBuilder, IConfigurationBuilder> EndConfiguration { get; set; }
+        public Func<IConfigurationBuilder, IConfigurationBuilder>? EndConfiguration { get; set; }
 
         /// <summary>
         /// Функция определения секретных ключей конфигурации. Чтобы скрывать в отображении.
         /// </summary>
-        public Func<string, bool> IsSecretConfigurationKey { get; set; }
+        public Func<string, bool>? IsSecretConfigurationKey { get; set; }
 
         /// <summary>
         /// Получение сконфигурированой фабрики логирования. Если не задано, то конфигурируется по умолчанию.
         /// </summary>
-        public Func<ILoggerFactory> ConfigureLogging { get; set; }
+        public Func<ILoggerFactory>? ConfigureLogging { get; set; }
 
         #endregion
     }
