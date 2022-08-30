@@ -20,8 +20,6 @@ namespace MicroElements.Configuration.Evaluation
         private IConfigurationRoot _configurationRoot;
         private IReadOnlyCollection<IValueEvaluator> _evaluators;
 
-        private Dictionary<string, string> _propertiesWithPlaceholders;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="PlaceholdersConfigurationProvider"/> class.
         /// </summary>
@@ -38,27 +36,19 @@ namespace MicroElements.Configuration.Evaluation
         {
             _configurationRoot = _configurationBuilder.Build();
             _evaluators = ValueEvaluator.CreateValueEvaluators(_buildContext, _configurationRoot).OrderBy(evaluator => evaluator.Info.Order).ToArray();
-
-            _propertiesWithPlaceholders = GetPropertiesWithPlaceholders(_configurationRoot);
-            base.Load();
         }
 
         /// <inheritdoc />
         public override bool TryGet(string key, out string value)
         {
-            _propertiesWithPlaceholders.TryGetValue(key, out string valueWithPlaceholder);
+            string originalValue = _configurationRoot.GetValue<string>(key);
 
-            var evaluationResult = SimpleExpressionParser.TryParseAndRender(key, valueWithPlaceholder, _configurationRoot, _evaluators);
-            value = evaluationResult.EvaluatedExpression;
-            return evaluationResult.EvaluatedExpression != null;
-        }
+            value 
+                = string.IsNullOrEmpty(originalValue) || !originalValue.HasPlaceholderFor(_evaluators) 
+                ? default
+                : SimpleExpressionParser.TryParseAndRender(key, originalValue, _configurationRoot, _evaluators).EvaluatedExpression;
 
-        private Dictionary<string, string> GetPropertiesWithPlaceholders(IConfigurationRoot configurationRoot)
-        {
-            return configurationRoot
-                .GetAllValues()
-                .Where(pair => pair.Value != null && pair.Value.HasPlaceholderFor(_evaluators))
-                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+            return value != null;
         }
     }
 
@@ -159,16 +149,10 @@ namespace MicroElements.Configuration.Evaluation
             return new EvaluationResult(key, valueWithExpression, null);
         }
 
-        public static string PlaceholderTag(this IValueEvaluator evaluator) => $"${{{evaluator.Info.Name}:";
+        public static string PlaceholderTag(this IValueEvaluator evaluator) 
+            => $"${{{evaluator.Info.Name}:";
 
-        public static string ParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators)
-        {
-            return TryParseAndRender(key, valueWithPlaceholderOriginal, null, evaluators).EvaluatedExpression;
-        }
-
-        public static string ParseAndRender(string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators)
-        {
-            return TryParseAndRender(string.Empty, valueWithPlaceholderOriginal, null, evaluators).EvaluatedExpression;
-        }
+        public static string ParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators) 
+            => TryParseAndRender(key, valueWithPlaceholderOriginal, null, evaluators).EvaluatedExpression;
     }
 }

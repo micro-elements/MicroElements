@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using FluentAssertions;
 using MicroElements.Bootstrap;
 using MicroElements.Configuration;
@@ -154,7 +156,7 @@ namespace MicroElements.Tests
             sampleOptions.Value.Should().BeEquivalentTo("OverridenByProfile2");
             sampleOptions.OptionalValue.Should().BeEquivalentTo("OptionalValueFromCommonWithProfile2");
         }
-        
+
         [Test(Description = "Чтение конфигурации с рекурсивным переопределением через профиль и подпрофиль")]
         public void ReadConfigurationWithRecursiveInclude()
         {
@@ -174,6 +176,51 @@ namespace MicroElements.Tests
                         Value = "SampleOptions.Value", 
                         SharedValue = "SampleOptions.SharedValue"
                     });
+        }
+
+        [Test(Description = "Динамическое обновление конфигурации")]
+        public void ReloadConfigurationOnFileContentChanged()
+        {
+            const string rootFile = "TestsConfiguration/Bootstrap/reload_on_change_profile/entry_point/configuration.json";
+            const string includedFile = "TestsConfiguration/Bootstrap/reload_on_change_profile/shared_resources/included_configuration.json";
+            const string placeholderFile = "TestsConfiguration/Bootstrap/reload_on_change_profile/shared_resources/placeholders.json";
+
+            // Restore original content.
+            File.WriteAllText(rootFile, File.ReadAllText(rootFile).Replace("SampleOptions.ValueChanged", "SampleOptions.Value"));
+            File.WriteAllText(includedFile, File.ReadAllText(includedFile).Replace("SampleOptions.SharedValueChanged", "SampleOptions.SharedValue"));
+            File.WriteAllText(placeholderFile, File.ReadAllText(placeholderFile).Replace("Placeholder.OptionalValueChanged", "Placeholder.OptionalValue"));
+
+            var startupOptions = new StartupConfiguration
+            {
+                ConfigurationPath = "TestsConfiguration/Bootstrap/reload_on_change_profile/entry_point",
+                Profile = "production"
+            };
+            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            IOptionsSnapshot<SampleOptions> sampleOptions = serviceProvider.GetService<IOptionsSnapshot<SampleOptions>>();
+
+            sampleOptions
+                .Value
+                .Should()
+                .BeEquivalentTo(
+                    new SampleOptions
+                    {
+                        Value = "SampleOptions.Value", 
+                        SharedValue = "SampleOptions.SharedValue",
+                        OptionalValue = "Placeholder.OptionalValue"
+                    });
+
+
+            File.WriteAllText(rootFile, File.ReadAllText(rootFile).Replace("SampleOptions.Value", "SampleOptions.ValueChanged"));
+            Thread.Sleep(1000);
+            serviceProvider.CreateScope().ServiceProvider.GetService<IOptionsSnapshot<SampleOptions>>().Value.Value.Should().Be("SampleOptions.ValueChanged");
+
+            File.WriteAllText(includedFile, File.ReadAllText(includedFile).Replace("SampleOptions.SharedValue", "SampleOptions.SharedValueChanged"));
+            Thread.Sleep(1000);
+            serviceProvider.CreateScope().ServiceProvider.GetService<IOptionsSnapshot<SampleOptions>>().Value.SharedValue.Should().Be("SampleOptions.SharedValueChanged");
+
+            File.WriteAllText(placeholderFile, File.ReadAllText(placeholderFile).Replace("Placeholder.OptionalValue", "Placeholder.OptionalValueChanged"));
+            Thread.Sleep(1000);
+            serviceProvider.CreateScope().ServiceProvider.GetService<IOptionsSnapshot<SampleOptions>>().Value.OptionalValue.Should().Be("Placeholder.OptionalValueChanged");
         }
 
         [Test]
@@ -392,20 +439,20 @@ namespace MicroElements.Tests
             };
 
             SimpleExpressionParser
-                .ParseAndRender("${eval1:Prop1}_${eval1:Prop2}", evaluators)
+                .ParseAndRender(default, "${eval1:Prop1}_${eval1:Prop2}", evaluators)
                 .Should().Be("Value1_Value2");
 
             SimpleExpressionParser
-                .ParseAndRender("${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
+                .ParseAndRender(default, "${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
                 .Should().Be("Success");
 
             evaluators = evaluators.Reverse().ToArray();
             SimpleExpressionParser
-                .ParseAndRender("${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
+                .ParseAndRender(default, "${eval2:${eval1:Prop1}_${eval1:Prop2}}", evaluators)
                 .Should().Be("Success");
 
             SimpleExpressionParser
-                .ParseAndRender("${eval1:${eval2:${eval1:Prop1}_${eval1:Prop2}}}", evaluators)
+                .ParseAndRender(default, "${eval1:${eval2:${eval1:Prop1}_${eval1:Prop2}}}", evaluators)
                 .Should().Be("Success!");
         }
 
@@ -419,7 +466,7 @@ namespace MicroElements.Tests
             };
 
             SimpleExpressionParser
-                .ParseAndRender("${eval1:Prop1", evaluators)
+                .ParseAndRender(default, "${eval1:Prop1", evaluators)
                 .Should().Be("${eval1:Prop1");
         }
 
