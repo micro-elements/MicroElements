@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MicroElements.Abstractions;
@@ -22,7 +23,7 @@ namespace MicroElements.Configuration
         /// Загрузка конфигурации.
         /// </summary>
         /// <param name="buildContext">Контекст построения приложения.</param>
-        public static void LoadConfiguration(BuildContext buildContext)
+        public static void LoadConfiguration(BuildContext buildContext, bool reloadOnChange = true)
         {
             var startupConfiguration = buildContext.StartupConfiguration;
 
@@ -36,15 +37,10 @@ namespace MicroElements.Configuration
             }
 
             // Вычислители без контекста
-            var evaluators = builder.Properties.GetValue(BuilderContext.Key.StatelessEvaluators);
-            if (evaluators == null)
-            {
-                evaluators = ValueEvaluator.CreateValueEvaluators(buildContext, null, statelessEvaluators: true).ToArray();
-                builder.Properties.SetValue(BuilderContext.Key.StatelessEvaluators, evaluators);
-            }
+            builder.Properties.AddIfNotExists(BuilderContext.Key.StatelessEvaluators, _ => ValueEvaluator.CreateValueEvaluators(buildContext, null, statelessEvaluators: true).ToArray());
 
             // Добавляем стандартное конфигурирование из файловой директории.
-            AddFileConfiguration(builder, buildContext);
+            builder.AddFileConfiguration(buildContext, reloadOnChange: reloadOnChange);
 
             // Параметры командной строки перекрывают все.
             builder = builder.AddCommandLine(startupConfiguration.CommandLineArgs?.Args ?? new string[0]);
@@ -88,8 +84,13 @@ namespace MicroElements.Configuration
         /// <param name="builder">ConfigurationBuilder в который добавляются конфигурации.</param>
         /// <param name="configurationPath">Директория для поиска файлов конфигурации.</param>
         /// <param name="searchPatterns">Паттерны для поиска файлов.</param>
+        /// <param name="reloadOnChange">Determines whether the source will be loaded if the underlying file changes.</param>
         /// <returns>Итоговый ConfigurationBuilder.</returns>
-        public static IConfigurationBuilder AddConfigurationFiles(this IConfigurationBuilder builder, string configurationPath, string[]? searchPatterns = null)
+        public static IConfigurationBuilder AddConfigurationFiles(
+            this IConfigurationBuilder builder,
+            string configurationPath,
+            string[]? searchPatterns = null,
+            bool reloadOnChange = true)
         {
             if (builder == null)
             {
@@ -97,6 +98,8 @@ namespace MicroElements.Configuration
             }
 
             searchPatterns ??= new[] { "*.json" };
+
+            IReadOnlyCollection<IValueEvaluator> statelessEvaluators = builder.Properties.GetValue(BuilderContext.Key.StatelessEvaluators) ?? Array.Empty<IValueEvaluator>();
 
             foreach (var searchPattern in searchPatterns)
             {
@@ -111,7 +114,7 @@ namespace MicroElements.Configuration
                         {
                             Path = file.PathNormalize(),
                             Optional = false,
-                            ReloadOnChange = true,
+                            ReloadOnChange = reloadOnChange,
                         };
 
                         jsonConfigurationSource.ResolveFileProvider();
@@ -120,8 +123,7 @@ namespace MicroElements.Configuration
                             jsonConfigurationSource.FileProvider = builder.GetFileProvider();
                         }
 
-                        var statelessEvaluators = builder.Properties.GetValue(BuilderContext.Key.StatelessEvaluators) ?? Array.Empty<IValueEvaluator>();
-                        builder.Add(new ProcessIncludesConfigurationSource(jsonConfigurationSource, configurationPath.PathNormalize(), statelessEvaluators));
+                        builder.Add(new ProcessIncludesConfigurationSource(jsonConfigurationSource, configurationPath.PathNormalize(), reloadOnChange, statelessEvaluators));
                     }
                 }
             }
@@ -129,7 +131,10 @@ namespace MicroElements.Configuration
             return builder;
         }
 
-        public static void AddFileConfiguration(this IConfigurationBuilder builder, BuildContext buildContext)
+        public static void AddFileConfiguration(
+            this IConfigurationBuilder builder,
+            BuildContext buildContext,
+            bool reloadOnChange = true)
         {
             var startupConfiguration = buildContext.StartupConfiguration;
 
@@ -149,7 +154,7 @@ namespace MicroElements.Configuration
                 builder.AddEnvInfo("ConfigurationBasePath", configurationBasePath);
 
                 // Add files from base path.
-                builder = builder.AddConfigurationFiles(configurationBasePath);
+                builder = builder.AddConfigurationFiles(configurationBasePath, reloadOnChange: reloadOnChange);
 
                 if (!string.IsNullOrEmpty(configurationProfile))
                 {
@@ -176,7 +181,5 @@ namespace MicroElements.Configuration
                 }
             }
         }
-        
-
     }
 }

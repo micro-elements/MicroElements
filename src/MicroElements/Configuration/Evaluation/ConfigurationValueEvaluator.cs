@@ -23,7 +23,7 @@ namespace MicroElements.Configuration.Evaluation
         }
 
         /// <inheritdoc />
-        public EvaluatorInfo Info => new EvaluatorInfo("configurationValue", 20);
+        public EvaluatorInfo Info { get; } = new EvaluatorInfo("configurationValue", 20);
 
         /// <inheritdoc />
         public EvaluationResult Evaluate(EvaluationContext context)

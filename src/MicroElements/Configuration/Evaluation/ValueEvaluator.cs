@@ -7,8 +7,10 @@ using System.Linq;
 using MicroElements.Abstractions;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.DependencyInjection;
+using MicroElements.Reflection.TypeExtensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MicroElements.Configuration.Evaluation
 {
@@ -19,7 +21,10 @@ namespace MicroElements.Configuration.Evaluation
             new EnvironmentEvaluator()
         };
 
-        public static IEnumerable<IValueEvaluator> CreateValueEvaluators(BuildContext buildContext, IConfigurationRoot configurationRoot, bool statelessEvaluators = false)
+        public static IEnumerable<IValueEvaluator> CreateValueEvaluators(
+            BuildContext buildContext,
+            IConfigurationRoot? configurationRoot,
+            bool statelessEvaluators = false)
         {
             // Делаем копию ServiceCollection, чтобы не портить временной регистрацией.
             IServiceCollection serviceCollectionCopy = buildContext.ServiceCollection.Copy();
@@ -27,15 +32,19 @@ namespace MicroElements.Configuration.Evaluation
             if (configurationRoot != null)
                 serviceCollectionCopy.AddSingleton(configurationRoot);
 
+            //TODO:
             var evaluatorTypes = buildContext
                 .ExportedTypes
-                .Where(type => type.IsClassAssignableTo<IValueEvaluator>())
-                .Where(type => !statelessEvaluators || type.GetConstructor(Type.EmptyTypes) != null)
-                .ToArray();
+                .Where(type => type.IsConcreteAndAssignableTo<IValueEvaluator>());
+
+            if (statelessEvaluators)
+            {
+                evaluatorTypes = evaluatorTypes.Where(type => type.GetConstructor(Type.EmptyTypes) != null);
+            }
 
             foreach (Type evaluatorType in evaluatorTypes)
             {
-                serviceCollectionCopy.AddSingleton(typeof(IValueEvaluator), evaluatorType);
+                serviceCollectionCopy.TryAddEnumerable(new ServiceDescriptor(typeof(IValueEvaluator), evaluatorType, ServiceLifetime.Singleton));
             }
 
             var serviceProvider = serviceCollectionCopy.BuildServiceProvider();

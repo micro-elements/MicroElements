@@ -65,9 +65,7 @@ namespace MicroElements.Bootstrap
         /// </summary>
         public bool DumpConfigurationToLog { get; set; } = true;
 
-        public Action<ModulesOptions> ConfigureModules { get; set; } = options => { };
-
-        public ModulesOptions Modules { get; set; } = new ModulesOptions();
+        public bool ReloadOnChange { get; set; } = true;
 
         #region Dynamic
 
@@ -99,7 +97,7 @@ namespace MicroElements.Bootstrap
         /// <summary>
         /// Получение сконфигурированой фабрики логирования. Если не задано, то конфигурируется по умолчанию.
         /// </summary>
-        public Func<ILoggerFactory>? ConfigureLogging { get; set; }
+        public Func<IServiceCollection, ILoggerFactory>? ConfigureLogging { get; set; }
 
         #endregion
     }

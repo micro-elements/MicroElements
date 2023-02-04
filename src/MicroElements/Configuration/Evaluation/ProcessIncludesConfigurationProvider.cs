@@ -16,11 +16,10 @@ namespace MicroElements.Configuration.Evaluation
     /// </summary>
     public class ProcessIncludesConfigurationProvider : ConfigurationProvider, IDisposable
     {
-        private readonly string _rootPath;
-        private readonly IReadOnlyCollection<IValueEvaluator> _valueEvaluators;
+        private readonly ProcessIncludesConfigurationSource _source;
 
         private readonly ProviderHandler _rootHandler;
-        private IReadOnlyCollection<ProviderHandler> _childHandlers; 
+        private IReadOnlyCollection<ProviderHandler>? _childHandlers;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProcessIncludesConfigurationProvider"/> class.
@@ -30,16 +29,14 @@ namespace MicroElements.Configuration.Evaluation
         /// <param name="valueEvaluators">Evaluator that can be used in include.</param>
         public ProcessIncludesConfigurationProvider(
             IConfigurationProvider configurationProvider,
-            string rootPath,
-            IReadOnlyCollection<IValueEvaluator> valueEvaluators = null)
+            ProcessIncludesConfigurationSource source)
         {
-            _rootPath = rootPath;
-            _valueEvaluators = valueEvaluators;
+            _source = source;
             _rootHandler = BuildHandler(configurationProvider);
         }
 
         /// <inheritdoc />
-        public override void Load() 
+        public override void Load()
         {
             _rootHandler.Provider.Load();
             _childHandlers ??= InitializeHandlers(_rootHandler.Provider, new Dictionary<string, ProviderHandler>());
@@ -65,7 +62,7 @@ namespace MicroElements.Configuration.Evaluation
             {
                 if (IsIncludeKey(key) && provider.TryGet(key, out string includePath))
                 {
-                    includePath = SimpleExpressionParser.ParseAndRender(key, includePath, _valueEvaluators) ?? includePath;
+                    includePath = SimpleExpressionParser.ParseAndRender(key, includePath, _source.ValueEvaluators) ?? includePath;
 
                     if (!string.IsNullOrWhiteSpace(includePath) && !includedFiles.ContainsKey(includePath))
                     {
@@ -80,25 +77,21 @@ namespace MicroElements.Configuration.Evaluation
             return includedFiles.Values;
         }
 
-        private ProviderHandler BuildHandler(IConfigurationProvider childProvider) 
-            => new
-            (
-                childProvider,
-                ChangeToken.OnChange(() => childProvider.GetReloadToken(), () => RebuildData())
-            );
+        private ProviderHandler BuildHandler(IConfigurationProvider childProvider)
+            => new(childProvider, ChangeToken.OnChange(() => childProvider.GetReloadToken(), () => RebuildData()));
 
         private IConfigurationProvider LoadIncludedConfiguration(string includePath)
         {
-            var fullPath = Path.GetFullPath(Path.Combine(_rootPath, includePath));
+            var fullPath = Path.GetFullPath(Path.Combine(_source.RootPath, includePath));
             var jsonConfigurationProvider = CreateConfigurationProvider(fullPath);
 
             jsonConfigurationProvider.Load();
             return jsonConfigurationProvider;
 
-            static IConfigurationProvider CreateConfigurationProvider(string fullPath)
+            IConfigurationProvider CreateConfigurationProvider(string fullPath)
             {
                 // todo: Можно расширить виды поддерживаемых провайдеров
-                var jsonConfigurationSource = new JsonConfigurationSource { Path = fullPath, ReloadOnChange = true };
+                var jsonConfigurationSource = new JsonConfigurationSource { Path = fullPath, ReloadOnChange = _source.ReloadOnChange };
                 jsonConfigurationSource.ResolveFileProvider();
                 var jsonConfigurationProvider = new JsonConfigurationProvider(jsonConfigurationSource);
                 return jsonConfigurationProvider;

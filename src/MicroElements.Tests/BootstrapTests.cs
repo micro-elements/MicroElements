@@ -26,7 +26,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = null
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
 
             var sampleOptions = serviceProvider.GetService<SampleOptions>();
             sampleOptions.ShouldBeWithDefaultValues();
@@ -40,7 +40,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = null
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
 
             var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<SampleOptions>>();
             var options = serviceProvider.GetRequiredService<IOptions<SampleOptions>>();
@@ -57,7 +57,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = "profile1"
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
             var sampleOptions = serviceProvider.GetService<SampleOptions>();
 
             sampleOptions.Value.Should().BeEquivalentTo("OverridenValueProfile1");
@@ -73,7 +73,7 @@ namespace MicroElements.Tests
                 Profile = null,
                 CommandLineArgs = new CommandLineArgs(new[] { "--profile", "profile1" })
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
 
             var sampleOptions = serviceProvider.GetService<SampleOptions>();
 
@@ -89,7 +89,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = null
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
 
             var sampleOptions = serviceProvider.GetService<IOptions<SampleOptions>>();
             sampleOptions.Value.ShouldBeWithDefaultValues();
@@ -109,7 +109,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = "profile1/sub_profile1"
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
             var sampleOptions = serviceProvider.GetService<SampleOptions>();
 
             sampleOptions.SharedValue.Should().BeEquivalentTo("SharedValue");
@@ -121,7 +121,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = "profile1/sub_profile2"
             };
-            var serviceProvider2 = new ApplicationBuilder().BuildAndStart(startupOptions2);
+            var serviceProvider2 = (IServiceProvider)new ApplicationBuilder().Build(startupOptions2);
             var sampleOptions2 = serviceProvider2.GetService<SampleOptions>();
 
             sampleOptions2.SharedValue.Should().BeEquivalentTo("SharedValue");
@@ -138,7 +138,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = null
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
         }
 
         [Test(Description = "Чтение конфигурации с переопределением через профиль и подпрофиль")]
@@ -149,7 +149,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
                 Profile = "profile2"
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
             var sampleOptions = serviceProvider.GetService<SampleOptions>();
 
             sampleOptions.SharedValue.Should().BeEquivalentTo("SharedValueFromCommon");
@@ -165,15 +165,15 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap/recursive_include_profile/entry_point",
                 Profile = "production"
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
             var sampleOptions = serviceProvider.GetService<SampleOptions>();
-            
+
             sampleOptions
                 .Should()
                 .BeEquivalentTo(
                     new SampleOptions
                     {
-                        Value = "SampleOptions.Value", 
+                        Value = "SampleOptions.Value",
                         SharedValue = "SampleOptions.SharedValue"
                     });
         }
@@ -195,7 +195,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Bootstrap/reload_on_change_profile/entry_point",
                 Profile = "production"
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
             IOptionsSnapshot<SampleOptions> sampleOptions = serviceProvider.GetService<IOptionsSnapshot<SampleOptions>>();
 
             sampleOptions
@@ -204,7 +204,7 @@ namespace MicroElements.Tests
                 .BeEquivalentTo(
                     new SampleOptions
                     {
-                        Value = "SampleOptions.Value", 
+                        Value = "SampleOptions.Value",
                         SharedValue = "SampleOptions.SharedValue",
                         OptionalValue = "Placeholder.OptionalValue"
                     });
@@ -234,62 +234,6 @@ namespace MicroElements.Tests
 
             Action action = () => new ApplicationBuilder().Build(startupOptions);
             action.Should().NotThrow();
-        }
-        [Test]
-        public void RegisterModules1()
-        {
-            var startupConfiguration = new StartupConfiguration
-            {
-                ConfigureModules = options => options.AutoDiscoverModules = false
-            };
-            var buildContext = new ApplicationBuilder().Build(startupConfiguration);
-            var testModule1Service = buildContext.GetService<TestModule1Service>();
-            testModule1Service.Should().BeNull();
-        }
-
-        [Test]
-        public void RegisterModules2()
-        {
-            var serviceCollection = new ServiceCollection();
-
-            var startupOptions = new StartupConfiguration
-            {
-                ServiceCollection = serviceCollection,
-                Modules = new ModulesOptions
-                {
-                    ModuleTypes = new[] { typeof(TestModule1) }
-                }
-            };
-            var buildContext = new ApplicationBuilder().Build(startupOptions);
-
-            var testModule1Service = buildContext.GetService<TestModule1Service>();
-            testModule1Service.Should().NotBeNull("testModule1Service had to be registered in TestModule1");
-        }
-
-        [Test]
-        public void RegisterModulesWithInjectedValues()
-        {
-            var serviceCollection = new ServiceCollection();
-
-            // Регистрируем конфигурацию.
-            serviceCollection.AddSingleton(new TestModule2Configuration { ConfigurationValue = "Test" });
-
-            var startupOptions = new StartupConfiguration
-            {
-                ServiceCollection = serviceCollection,
-                Modules = new ModulesOptions
-                {
-                    ModuleTypes = new[] { typeof(TestModule1), typeof(TestModule2) }
-                }
-            };
-            var buildContext = new ApplicationBuilder().Build(startupOptions);
-
-            var testModule1Service = buildContext.GetService<TestModule1Service>();
-            testModule1Service.Should().NotBeNull("testModule1Service had to be registered in TestModule1");
-
-            var testModule2Service = buildContext.GetService<TestModule2Service>();
-            testModule2Service.Should().NotBeNull("testModule2Service had to be registered in TestModule2");
-            testModule2Service.ConfigurationValue.Should().Be("Test");
         }
 
         [Test]
@@ -477,14 +421,14 @@ namespace MicroElements.Tests
             var startupOptions = new StartupConfiguration
             {
                 ConfigurationPath = "TestsConfiguration/Bootstrap",
-                ConfigureLogging = () =>
+                ConfigureLogging = (s) =>
                 {
                     var loggerFactory = new LoggerFactory();
                     loggerFactory.AddProvider(testLoggerProvider);
                     return loggerFactory;
                 }
             };
-            new ApplicationBuilder().BuildAndStart(startupOptions);
+            new ApplicationBuilder().Build(startupOptions);
 
             testLoggerProvider.Log.Should().Contain("Diagnostic: too many assemblies found. Specify AssemblyScanPatterns.");
         }
@@ -508,7 +452,7 @@ namespace MicroElements.Tests
                 ConfigurationPath = "TestsConfiguration/Complex/complex1",
                 ConfigurationTypes = new[] { typeof(ComplexObject) }
             };
-            var serviceProvider = new ApplicationBuilder().BuildAndStart(startupOptions);
+            var serviceProvider = (IServiceProvider)new ApplicationBuilder().Build(startupOptions);
 
             var complexObject = serviceProvider.GetRequiredService<ComplexObject>();
             complexObject.Should().NotBeNull();

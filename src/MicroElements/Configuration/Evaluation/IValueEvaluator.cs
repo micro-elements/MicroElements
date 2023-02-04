@@ -65,17 +65,17 @@ namespace MicroElements.Configuration.Evaluation
         /// <summary>
         /// Input expression.
         /// </summary>
-        public string Expression { get; }
+        public string? Expression { get; }
 
         /// <summary>
         /// Evaluated key or null if key was not changed.
         /// </summary>
-        public string EvaluatedKey { get; }
+        public string? EvaluatedKey { get; }
 
         /// <summary>
         /// Evaluated expression or null if expression was not evaluated.
         /// </summary>
-        public string EvaluatedExpression { get; }
+        public string? EvaluatedExpression { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EvaluationResult"/> class.
@@ -86,9 +86,9 @@ namespace MicroElements.Configuration.Evaluation
         /// <param name="evaluatedKey">Evaluated key or null if key was not changed.</param>
         public EvaluationResult(
             string key,
-            string expression,
-            string evaluatedExpression,
-            string evaluatedKey = null)
+            string? expression,
+            string? evaluatedExpression,
+            string? evaluatedKey = null)
         {
             Key = key;
             Expression = expression;

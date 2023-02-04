@@ -2,15 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using MicroElements.Abstractions;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.Bootstrap.Utils;
 using MicroElements.Configuration;
-using MicroElements.DependencyInjection;
 using MicroElements.Logging;
+using MicroElements.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -25,17 +25,6 @@ namespace MicroElements.Bootstrap
     public class ApplicationBuilder : IApplicationBuilder
     {
         private BuildContext _buildContext;
-
-        /// <summary>
-        /// Составляем и запускаем приложение.
-        /// </summary>
-        /// <param name="startupConfiguration">Параметры запуска приложения.</param>
-        /// <returns>Провайдер к коллекции зарегистрированных сервисов.</returns>
-        public IServiceProvider BuildAndStart(StartupConfiguration startupConfiguration)
-        {
-            var buildContext = Build(startupConfiguration);
-            return Start(buildContext);
-        }
 
         /// <summary>
         /// Составляем приложение.
@@ -63,24 +52,33 @@ namespace MicroElements.Bootstrap
             {
                 // Получение сконфигурированной фабрики логирования.
                 var configureLogging = startupConfiguration.ConfigureLogging ?? DefaultLogging.ConfigureLogging;
-                _buildContext.LoggerFactory = configureLogging();
+                _buildContext.LoggerFactory = configureLogging(_buildContext.ServiceCollection);
                 _buildContext.Logger = _buildContext.LoggerFactory.CreateLogger("Bootstrap");
             }
 
             using (measureSession.StartTimer("LoadTypes"))
             {
                 // Получение информации об окружении.
-                _buildContext.StartupInfo = ReflectionUtils.GetStartupInfo();
+                _buildContext.StartupInfo = GetStartupInfo();
 
                 // Переключим текущую директорию на директорию запуска.
                 Directory.SetCurrentDirectory(_buildContext.StartupInfo.BaseDirectory);
                 _buildContext.StartupInfo.CurrentDirectory = _buildContext.StartupInfo.BaseDirectory;
 
-                // Загрузка сборок в память
-                _buildContext.Assemblies = ReflectionUtils
-                    .LoadAssemblies(_buildContext.StartupInfo.BaseDirectory, _buildContext.StartupConfiguration.AssemblyScanPatterns)
-                    .Concat(new[] { typeof(ApplicationBuilder).Assembly })
-                    .Distinct()
+                // Loading assemblies and types
+                AssemblySource assemblySource = new(
+                    loadFromDomain: true,
+                    loadFromDirectory: _buildContext.StartupInfo.BaseDirectory,
+                    searchPatterns: _buildContext.StartupConfiguration.AssemblyScanPatterns);
+                TypeFilters typeFilters = TypeFilters.AllPublicTypes;
+
+                _buildContext.Assemblies = assemblySource
+                    .LoadAssemblies()
+                    .ToArray();
+
+                _buildContext.ExportedTypes = _buildContext
+                    .Assemblies
+                    .GetTypes(typeFilters)
                     .ToArray();
 
                 _buildContext.Logger.LogDebug($"Loaded {_buildContext.Assemblies.Length} assemblies");
@@ -92,16 +90,13 @@ namespace MicroElements.Bootstrap
                     _buildContext.Logger.LogWarning($"Diagnostic: too many assemblies found. Specify AssemblyScanPatterns. Loaded: {_buildContext.Assemblies.Length} assemblies, AssemblyScanPatterns: {assemblyScanPatternsText}");
                 }
 
-                // Список типов
-                _buildContext.ExportedTypes = _buildContext.Assemblies.SelectMany(assembly => assembly.GetDefinedTypesSafe()).ToArray();
-
                 _buildContext.LogHeader();//todo: assemblies loaded? types loaded
             }
 
             using (measureSession.StartTimer("LoadConfiguration"))
             {
                 // Загрузка конфигурации
-                ConfigurationReader.LoadConfiguration(_buildContext);
+                ConfigurationReader.LoadConfiguration(_buildContext, reloadOnChange: startupConfiguration.ReloadOnChange);
 
                 // Регистрируем конфигурацию в виде IConfiguration и IConfigurationRoot
                 serviceCollection.Replace(ServiceDescriptor.Singleton<IConfiguration>(_buildContext.ConfigurationRoot));
@@ -142,26 +137,6 @@ namespace MicroElements.Bootstrap
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// Запускаем приложение.
-        /// </summary>
-        /// <param name="buildContext">Провайдер сервисов.</param>
-        /// <returns>Провайдер к коллекции зарегистрированных сервисов.</returns>
-        public IBuildContext Start(IBuildContext buildContext)
-        {
-            _buildContext.Logger.LogInformation("Starting services");
-            var measureSession = new MeasureSession("Starting services");
-            measureSession.ExecuteWithTimer("StartRunnables", () =>
-            {
-                // Запуск сервисов.
-                buildContext.ServiceProvider.StartRunnablesAsync(_buildContext.Logger).Wait();
-            });
-
-            measureSession.LogMeasures(_buildContext.Logger);
-
-            return buildContext;
-        }
-
         public static void SetEnvVariables(StartupConfiguration configuration)
         {
             var fullLogsPath = Path.IsPathRooted(configuration.LogsPath)
@@ -190,7 +165,7 @@ namespace MicroElements.Bootstrap
             var services = buildContext.ServiceCollection;
 
             // Заменяем реализацию фабрики опций на свою.
-            services.Add(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Configuration.OptionsFactory<>)));
+            services.TryAdd(ServiceDescriptor.Transient(typeof(IOptionsFactory<>), typeof(Configuration.OptionsFactory<>)));
 
             // Добавляем поддержку IOptions, IOptionsSnapshot, IOptionsMonitor
             services.AddOptions();
@@ -207,32 +182,22 @@ namespace MicroElements.Bootstrap
             // todo: зарегистрировать не исходные типы, а результирующий
             services.AddSingleton(buildContext.StartupConfiguration);
             services.AddSingleton(buildContext.StartupInfo);
+        }
 
-            var modulesOptions = startupConfiguration.Modules;
-            startupConfiguration.ConfigureModules(modulesOptions);
+        /// <summary>
+        /// Returns some startup info.
+        /// </summary>
+        /// <returns>StartupInfo.</returns>
+        public static StartupInfo GetStartupInfo()
+        {
+            var info = new StartupInfo();
+            var executingAssembly = Assembly.GetExecutingAssembly();
+            info.StartupApp = Path.GetFileName(executingAssembly.Location);
+            info.Version = executingAssembly.GetName().Version.ToString(3);
+            info.BaseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            info.CurrentDirectory = Directory.GetCurrentDirectory();
 
-            // Регистрируем модули.
-            List<Type> moduleTypes = new List<Type>();
-            if (modulesOptions.AutoDiscoverModules)
-            {
-                moduleTypes = buildContext.ExportedTypes.GetClassTypesAssignableTo<IModule>().ToList();
-
-                logger.LogInformation($"Found {moduleTypes.Count} modules:");
-                foreach (var moduleType in moduleTypes)
-                    logger.LogInformation($"Autodiscovered module: {moduleType.Name}");
-            }
-
-            var userDefinedModules = modulesOptions.ModuleTypes;
-            if (userDefinedModules.Length > 0)
-            {
-                logger.LogInformation("UserDefinedModules modules:");
-                foreach (var moduleType in userDefinedModules)
-                    logger.LogInformation($"UserDefined module: {moduleType.Name}");
-                moduleTypes.AddRange(userDefinedModules);
-            }
-
-            if (moduleTypes.Count > 0)
-                services.RegisterModules(moduleTypes);
+            return info;
         }
     }
 }

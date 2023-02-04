@@ -6,7 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using MicroElements.DependencyInjection;
+using MicroElements.Reflection;
+using MicroElements.Reflection.TypeExtensions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace MicroElements.Bootstrap.Extensions
@@ -21,8 +24,8 @@ namespace MicroElements.Bootstrap.Extensions
         /// <returns>ContainerBuilder для поддержки комбинирования вызовов.</returns>
         public static IServiceCollection RegisterLogging(this IServiceCollection services, ILoggerFactory loggerFactory)
         {
-            services.AddSingleton<ILoggerFactory>(loggerFactory);
-            services.AddSingleton<ILogger>(loggerFactory.CreateLogger("Default"));
+            services.TryAddSingleton<ILoggerFactory>(loggerFactory);
+            services.TryAddSingleton<ILogger>(loggerFactory.CreateLogger("Default"));
             services.AddLogging();
 
             return services;
@@ -75,38 +78,6 @@ namespace MicroElements.Bootstrap.Extensions
             return builder;
         }
 
-        /// <summary>
-        /// Регистрация модулей.
-        /// </summary>
-        /// <param name="services">services</param>
-        /// <param name="moduleServices">moduleServices</param>
-        /// <param name="assemblies">assemblies</param>
-        /// <returns>IServiceCollection для поддержки комбинирования вызовов.</returns>
-        public static IServiceCollection RegisterModules(this IServiceCollection services, IServiceCollection moduleServices, params Assembly[] assemblies)
-        {
-            var moduleTypes = GetModuleTypes(assemblies);
-
-            if (moduleTypes.Count > 0)
-            {
-                // Зарегистрируем в промежуточный контейнер
-                moduleTypes.ForEach(moduleType => moduleServices.RegisterType(moduleType).As<IModule>().Add());
-
-                // Получим модули с внедренными значениями
-                var moduleServiceProvider = moduleServices.BuildServiceProvider();
-                var modules = moduleServiceProvider.GetServices<IModule>().ToList();
-
-                // Добавим модули в основной билдер.
-                modules.ForEach(module => module.ConfigureServices(services));
-            }
-
-            return services;
-        }
-
-        public static List<Type> GetModuleTypes(this Assembly[] assemblies)
-        {
-            return assemblies.GetClassTypesAssignableTo<IModule>().ToList();
-        }
-
         public static IEnumerable<Type> GetClassTypesAssignableTo<T>(this IEnumerable<Assembly> assemblies)
         {
             return assemblies
@@ -116,51 +87,7 @@ namespace MicroElements.Bootstrap.Extensions
 
         public static IEnumerable<Type> GetClassTypesAssignableTo<T>(this IEnumerable<Type> types)
         {
-            return types.Where(type => type.IsClassAssignableTo<T>());
-        }
-
-        public static List<IModule> ResolveModules(this IServiceCollection moduleServices, List<Type> moduleTypes)
-        {
-            // Зарегистрируем в промежуточный контейнер
-            moduleTypes.ForEach(moduleType => moduleServices.RegisterType(moduleType).As<IModule>().Add());
-
-            // Получим модули с внедренными значениями
-            var moduleServiceProvider = moduleServices.BuildServiceProvider();
-            var modules = moduleServiceProvider.GetServices<IModule>().ToList();
-
-            return modules;
-        }
-
-        public static IServiceCollection RegisterModules(this IServiceCollection services, List<Type> moduleTypes)
-        {
-            if (moduleTypes.Count > 0)
-            {
-                // Copy of service collection
-                IServiceCollection moduleServices = services.Copy();
-
-                // Зарегистрируем в промежуточный контейнер
-                //moduleTypes.ForEach(moduleType => moduleServices.RegisterType(moduleType).As<IModule>().Add());
-                moduleTypes.ForEach(moduleType => moduleServices.RegisterType(moduleType).AsSelf().Add());
-
-                // Получим модули с внедренными значениями
-                var moduleServiceProvider = moduleServices.BuildServiceProvider();
-
-                foreach (var moduleType in moduleTypes)
-                {
-                    var module = moduleServiceProvider.GetService(moduleType) as IModule;
-
-                    //todo: можно сделать duck typing по наличию метода ConfigureServices
-                    module.ConfigureServices(services);
-                }
-
-                ////todo: можно сделать duck typing по наличию метода ConfigureServices
-                //var modules = moduleServiceProvider.GetServices<IModule>().ToList();
-
-                //// Добавим модули в основной билдер.
-                //modules.ForEach(module => module.ConfigureServices(services));
-            }
-
-            return services;
+            return types.Where(type => type.IsConcreteAndAssignableTo<T>());
         }
 
         /// <summary>

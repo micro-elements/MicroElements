@@ -147,6 +147,10 @@ namespace MicroElements.Configuration
             if (HasConfigurationValues(configurationSection))
                 return new[] { configurationSection };
 
+            configurationSection = configurationRoot.GetSection($"{name}");
+            if (HasConfigurationValues(configurationSection))
+                return new[] { configurationSection };
+
             configurationSection = configurationRoot.GetSection($"Configuration:{name}{nameSuffix}");
             if (HasConfigurationValues(configurationSection))
                 return new[] { configurationSection };

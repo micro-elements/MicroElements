@@ -12,8 +12,10 @@ namespace MicroElements.Configuration.Evaluation
     public class ProcessIncludesConfigurationSource : IConfigurationSource
     {
         private readonly IConfigurationSource _configurationSource;
-        private readonly string _rootPath;
-        private readonly IReadOnlyCollection<IValueEvaluator> _valueEvaluators;
+
+        public string RootPath { get; }
+        public bool ReloadOnChange { get; }
+        public IReadOnlyCollection<IValueEvaluator>? ValueEvaluators { get; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProcessIncludesConfigurationSource"/> class.
@@ -24,18 +26,20 @@ namespace MicroElements.Configuration.Evaluation
         public ProcessIncludesConfigurationSource(
             IConfigurationSource configurationSource,
             string rootPath,
-            IReadOnlyCollection<IValueEvaluator> valueEvaluators = null)
+            bool reloadOnChange,
+            IReadOnlyCollection<IValueEvaluator>? valueEvaluators)
         {
             _configurationSource = configurationSource;
-            _rootPath = rootPath;
-            _valueEvaluators = valueEvaluators;
+            RootPath = rootPath;
+            ValueEvaluators = valueEvaluators;
+            ReloadOnChange = reloadOnChange;
         }
 
         /// <inheritdoc />
         public IConfigurationProvider Build(IConfigurationBuilder builder)
         {
             IConfigurationProvider fileConfigurationProvider = _configurationSource.Build(builder);
-            return new ProcessIncludesConfigurationProvider(fileConfigurationProvider, _rootPath, _valueEvaluators);
+            return new ProcessIncludesConfigurationProvider(fileConfigurationProvider, this);
         }
     }
 }

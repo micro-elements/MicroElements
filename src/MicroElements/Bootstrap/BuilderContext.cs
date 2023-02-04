@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using MicroElements.Configuration.Evaluation;
 
 namespace MicroElements.Bootstrap
@@ -11,74 +12,47 @@ namespace MicroElements.Bootstrap
     {
         public static class Key
         {
-            public static readonly ContextKey<IStartupConfiguration> StartupConfiguration = new ContextKey<IStartupConfiguration>("MicroElements.StartupConfiguration");
-            public static readonly ContextKey<IReadOnlyCollection<IValueEvaluator>> StatelessEvaluators = new ContextKey<IReadOnlyCollection<IValueEvaluator>>("MicroElements.Evaluators");
+            public static readonly ContextKey<IStartupConfiguration> StartupConfiguration = new("MicroElements.StartupConfiguration");
+            public static readonly ContextKey<IReadOnlyCollection<IValueEvaluator>> StatelessEvaluators = new("MicroElements.StatelessEvaluators");
+            public static readonly ContextKey<IReadOnlyCollection<IValueEvaluator>> ValueEvaluators = new("MicroElements.ValueEvaluators");
         }
 
-        public static T GetValue<T>(this IDictionary<object, object> context, ContextKey<T> key)
+        public static T? GetValue<T>(this IDictionary<string, object> context, ContextKey<T> key)
         {
-            if (context.TryGetValue(key, out object value))
+            if (context.TryGetValue(key.Key, out object value))
             {
                 return (T)value;
             }
 
             return default;
-        }
-
-        public static T GetValue<T>(this IDictionary<string, object> context, ContextKey<T> key)
-        {
-            if (context.TryGetValue(key.AsText, out object value))
-            {
-                return (T)value;
-            }
-
-            return default;
-        }
-
-        public static void SetValue<T>(this IDictionary<object, object> context, ContextKey<T> key, T value)
-        {
-            context.Add(key, value);
         }
 
         public static void SetValue<T>(this IDictionary<string, object> context, ContextKey<T> key, T value)
         {
-            context.Add(key.AsText, value);
-        }
-    }
-
-    public readonly struct ContextKey<T> : IEquatable<ContextKey<T>>
-    {
-        public ContextKey(string key)
-        {
-            Key = key;
+            context.Add(key.Key, value);
         }
 
-        public string Key { get; }
-
-        public Type Type => typeof(T);
-
-        public string AsText => $"({Key}, {Type})";
-
-        /// <inheritdoc />
-        public override string ToString() => AsText;
-
-        /// <inheritdoc />
-        public bool Equals(ContextKey<T> other) => Key == other.Key && Type == other.Type;
-
-        /// <inheritdoc />
-        public override bool Equals(object obj) => obj is ContextKey<T> other && Equals(other);
-
-        /// <inheritdoc />
-        public override int GetHashCode()
+        public static T GetOrAdd<T>(this IDictionary<string, object> context, ContextKey<T> key, Func<ContextKey<T>, T> factory)
         {
-            unchecked
+            var value = context.GetValue(key);
+            if (value == null)
             {
-                return ((Key != null ? Key.GetHashCode() : 0) * 397) ^ (Type != null ? Type.GetHashCode() : 0);
+                value = factory(key) ?? throw new InvalidOperationException("factory returned null");
+                context.SetValue(key, value);
             }
+
+            return value;
         }
 
-        public static bool operator ==(ContextKey<T> left, ContextKey<T> right) => left.Equals(right);
+        public static T GetOrAdd<T>(this IDictionary<string, object> context, ContextKey<T> key, Func<T> factory)
+            => context.GetOrAdd(key, _ => factory());
 
-        public static bool operator !=(ContextKey<T> left, ContextKey<T> right) => !left.Equals(right);
+        public static void AddIfNotExists<T>(this IDictionary<string, object> context, ContextKey<T> key, Func<ContextKey<T>, T> factory)
+            => context.GetOrAdd(key, factory);
+
+        public static void AddIfNotExists<T>(this IDictionary<string, object> context, ContextKey<T> key, Func<T> factory)
+            => context.GetOrAdd(key, _ => factory());
     }
+
+    public readonly record struct ContextKey<T>(string Key);
 }

@@ -1,3 +1,8 @@
+# 4.0.0
+- Removed Modules, Startable as redundand with Asp.NetCore
+- ReloadOnChange for file configurations 
+- CodeBase refreshed, many minor and major changes
+
 # 3.2.0
 - PR#11 reload on change for placeholders from @i00lii
 - minor changes

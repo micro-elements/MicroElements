@@ -5,7 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MicroElements.Abstractions;
+using MicroElements.Bootstrap;
+using MicroElements.Collections.Cache;
+using MicroElements.Collections.TwoLayerCache;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MicroElements.Configuration.Evaluation
 {
@@ -34,8 +38,32 @@ namespace MicroElements.Configuration.Evaluation
         /// <inheritdoc />
         public override void Load()
         {
+            IValueEvaluator[] CreateValueEvaluators()
+            {
+                IValueEvaluator[] valueEvaluators = null;
+
+                if (_buildContext.ServiceProvider is { } serviceProvider)
+                {
+                    valueEvaluators = serviceProvider
+                        .GetServices<IValueEvaluator>()
+                        .OrderBy(evaluator => evaluator.Info.Order)
+                        .ToArray();
+                }
+
+                if (valueEvaluators is null || valueEvaluators.Length == 0)
+                {
+                    valueEvaluators = ValueEvaluator
+                        .CreateValueEvaluators(_buildContext, _configurationRoot)
+                        .OrderBy(evaluator => evaluator.Info.Order)
+                        .ToArray();
+                }
+
+                return valueEvaluators;
+            }
+
             _configurationRoot = _configurationBuilder.Build();
-            _evaluators = ValueEvaluator.CreateValueEvaluators(_buildContext, _configurationRoot).OrderBy(evaluator => evaluator.Info.Order).ToArray();
+
+            _evaluators = _configurationBuilder.Properties.GetOrAdd(BuilderContext.Key.ValueEvaluators, CreateValueEvaluators);
         }
 
         /// <inheritdoc />
@@ -43,10 +71,10 @@ namespace MicroElements.Configuration.Evaluation
         {
             string originalValue = _configurationRoot.GetValue<string>(key);
 
-            value 
-                = string.IsNullOrEmpty(originalValue) || !originalValue.HasPlaceholderFor(_evaluators) 
-                ? default
-                : SimpleExpressionParser.TryParseAndRender(key, originalValue, _configurationRoot, _evaluators).EvaluatedExpression;
+            if (string.IsNullOrEmpty(originalValue) || !originalValue.HasPlaceholderFor(_evaluators))
+                value = null;
+            else
+                value = SimpleExpressionParser.TryParseAndRender(key, originalValue, _configurationRoot, _evaluators).EvaluatedExpression;
 
             return value != null;
         }
@@ -63,18 +91,19 @@ namespace MicroElements.Configuration.Evaluation
 
     public static class SimpleExpressionParser
     {
-        public static bool HasPlaceholderFor(this string value, IReadOnlyCollection<IValueEvaluator> evaluators) => evaluators.Any(evaluator => value.Contains(evaluator.PlaceholderTag()));
+        public static bool HasPlaceholderFor(this string value, IReadOnlyCollection<IValueEvaluator> evaluators)
+            => value.Contains("$") && evaluators.Any(evaluator => value.Contains(evaluator.PlaceholderTag()));
 
         public static EvaluationResult TryParseAndRender(
             string key,
-            string valueWithExpression,
+            string? valueWithExpression,
             IConfiguration configuration,
-            IReadOnlyCollection<IValueEvaluator> evaluators)
+            IReadOnlyCollection<IValueEvaluator>? evaluators)
         {
             if (valueWithExpression != null && evaluators != null)
             {
                 var valueWithPlaceholder = valueWithExpression;
-                string valueWithPlaceholderPrev = null;
+                string? valueWithPlaceholderPrev = null;
                 int placeholderValueEndIndex = 0;
                 while (placeholderValueEndIndex >= 0 && valueWithPlaceholderPrev != valueWithPlaceholder)
                 {
@@ -123,12 +152,6 @@ namespace MicroElements.Configuration.Evaluation
                                         evaluatedValue = deepResult.EvaluatedExpression;
                                     }
 
-                                    //if (tagIndex == 0 && placeholderValueEndIndex == valueWithPlaceholderOriginal.Length - 1)
-                                    //{
-                                    //    value = evaluatedValue;
-                                    //    return true;
-                                    //}
-
                                     var placeholder = valueWithPlaceholder.Substring(tagIndex, placeholderValueEndIndex - tagIndex + 1);
                                     valueWithPlaceholder = valueWithPlaceholder.Replace(placeholder, evaluatedValue);
                                     break;
@@ -149,10 +172,11 @@ namespace MicroElements.Configuration.Evaluation
             return new EvaluationResult(key, valueWithExpression, null);
         }
 
-        public static string PlaceholderTag(this IValueEvaluator evaluator) 
-            => $"${{{evaluator.Info.Name}:";
+        public static string PlaceholderTag(this IValueEvaluator evaluator) => Cache
+                .Instance<IValueEvaluator, string>()
+                .GetOrAdd(evaluator, ev => $"${{{ev.Info.Name}:");
 
-        public static string ParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator> evaluators) 
+        public static string? ParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator>? evaluators)
             => TryParseAndRender(key, valueWithPlaceholderOriginal, null, evaluators).EvaluatedExpression;
     }
 }

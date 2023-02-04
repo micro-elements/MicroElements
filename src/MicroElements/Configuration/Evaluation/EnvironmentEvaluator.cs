@@ -12,7 +12,7 @@ namespace MicroElements.Configuration.Evaluation
     public class EnvironmentEvaluator : IValueEvaluator
     {
         /// <inheritdoc />
-        public EvaluatorInfo Info => new EvaluatorInfo("environment", 10);
+        public EvaluatorInfo Info { get; } = new EvaluatorInfo("environment", 10);
 
         /// <inheritdoc />
         EvaluationResult IValueEvaluator.Evaluate(EvaluationContext context)

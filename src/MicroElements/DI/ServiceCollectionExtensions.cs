@@ -3,75 +3,46 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
+using MicroElements.Collections.Extensions.Iterate;
+using MicroElements.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MicroElements.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddSingletons(this IServiceCollection services, Assembly assembly, Func<Type, bool> typeToRegister)
+        public static IEnumerable<(Type ImplType, Type[] ServiceTypes)> GetTypesToRegister(this Assembly assembly, Func<Type, Type[]> typeToServiceTypes)
         {
-            assembly
+            var typesToRegister = assembly
                 .GetDefinedTypesSafe()
-                .Where(typeToRegister)
-                .Iter(type => services.AddSingleton(type));
-
-            return services;
+                .Where(type => !type.IsAbstract && !type.IsInterface)
+                .Select(type => (ImplType: type, ServiceTypes: typeToServiceTypes(type)))
+                .Where(a => a.ServiceTypes != null);
+            return typesToRegister;
         }
 
-        public static IServiceCollection AddSingletons2(this IServiceCollection services, Assembly assembly, Func<Type, Type> typeToServiceType)
-        {
-            assembly
-                .GetDefinedTypesSafe()
-                .Select(type => new { Type = type, ServiceType = typeToServiceType(type) })
-                .Where(a => a.ServiceType != null)
-                .Iter(a => services.AddSingleton(a.ServiceType, a.Type));
-
-            return services;
-        }
-
-        public static IServiceCollection AddSingletons3(this IServiceCollection services, Assembly assembly, Func<Type, Type[]> typeToServiceTypes)
-        {
-            assembly
-                .GetDefinedTypesSafe()
-                .Select(type => new { Type = type, ServiceTypes = typeToServiceTypes(type) })
-                .Where(a => a.ServiceTypes != null)
-                .Iter(a =>
-                {
-                    foreach (var serviceType in a.ServiceTypes)
-                        services.AddSingleton(serviceType, a.Type);
-                });
-
-            return services;
-        }
-
-        public static IServiceCollection AddSingletons<TService>(this IServiceCollection services, IEnumerable<Type> types)
-        {
-            var serviceTypes = types.Where(type => type.IsClassAssignableTo<TService>());
-            serviceTypes.Iter(t => services.AddSingleton(typeof(TService), t));
-
-            return services;
-        }
-
-        public static IEnumerable<ServiceDescriptor> GetServiceDescriptors(this Assembly assembly, Func<Type, Type[]> typeToServiceTypes, ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        public static IEnumerable<ServiceDescriptor> GetServicesToRegister(this Assembly assembly, Func<Type, Type[]> typeToServiceTypes, ServiceLifetime lifetime = ServiceLifetime.Singleton)
         {
             return assembly
-                .GetDefinedTypesSafe()
-                .Select(type => new { ImplementationType = type, ServiceTypes = typeToServiceTypes(type) })
-                .Where(a => a.ServiceTypes != null)
-                .SelectMany(a => a.ServiceTypes.Select(serviceType => new ServiceDescriptor(serviceType, a.ImplementationType, lifetime)));
+                .GetTypesToRegister(typeToServiceTypes)
+                .SelectMany(a => a.ServiceTypes.Select(serviceType => (ServiceType: serviceType, a.ImplType)))
+                .Select(a => new ServiceDescriptor(a.ServiceType, a.ImplType, lifetime));
         }
 
-        public static IEnumerable<ServiceDescriptor> GetServiceDescriptors(this Assembly assembly, Func<Type, bool> typeFilter,
-            Type serviceType, ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        public static IServiceCollection ExploreAndAddServices(
+            this IServiceCollection services,
+            Assembly assembly,
+            Func<Type, Type[]> typeToServiceTypes,
+            ServiceLifetime lifetime = ServiceLifetime.Singleton)
         {
-            return assembly
-                .GetDefinedTypesSafe()
-                .Where(typeFilter)
-                .Select(type => new ServiceDescriptor(serviceType, type, lifetime));
+            assembly
+                .GetServicesToRegister(typeToServiceTypes, lifetime)
+                .Iterate(services.TryAdd);
+
+            return services;
         }
     }
 }
