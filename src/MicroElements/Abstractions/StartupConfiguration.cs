@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Reflection;
 using MicroElements.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,6 +60,10 @@ namespace MicroElements.Bootstrap
         /// <para>Default: { "*.dll", "*.exe" }</para>
         /// </summary>
         public string[] AssemblyScanPatterns { get; set; } = Constants.DefaultAssemblyScanPatterns;
+
+        public Func<Assembly[]>? GetAssemblies { get; set; }
+
+        public Func<Type[]>? GetTypes { get; set; }
 
         /// <summary>
         /// If <c>true</c> dumps all configuration values to Logger.

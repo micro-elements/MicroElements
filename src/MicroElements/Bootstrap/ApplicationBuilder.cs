@@ -66,20 +66,42 @@ namespace MicroElements.Bootstrap
                 _buildContext.StartupInfo.CurrentDirectory = _buildContext.StartupInfo.BaseDirectory;
 
                 // Loading assemblies and types
-                AssemblySource assemblySource = new(
-                    loadFromDomain: true,
-                    loadFromDirectory: _buildContext.StartupInfo.BaseDirectory,
-                    searchPatterns: _buildContext.StartupConfiguration.AssemblyScanPatterns);
-                TypeFilters typeFilters = TypeFilters.AllPublicTypes;
+                if (_buildContext.StartupConfiguration.GetAssemblies is { } getAssemblies)
+                {
+                    _buildContext.Assemblies = getAssemblies();
+                }
+                else
+                {
+                    AssemblySource assemblySource = new()
+                    {
+                        LoadFromDomain = true,
+                        LoadFromDirectory = _buildContext.StartupInfo.BaseDirectory,
+                        SearchPatterns = _buildContext.StartupConfiguration.AssemblyScanPatterns,
+                        IncludePatterns = _buildContext.StartupConfiguration.AssemblyScanPatterns
+                    };
 
-                _buildContext.Assemblies = assemblySource
-                    .LoadAssemblies()
-                    .ToArray();
+                    _buildContext.Assemblies = assemblySource
+                        .LoadAssemblies()
+                        .ToArray();
+                }
 
-                _buildContext.ExportedTypes = _buildContext
-                    .Assemblies
-                    .GetTypes(typeFilters)
-                    .ToArray();
+                if (_buildContext.StartupConfiguration.GetTypes is { } getTypes)
+                {
+                    _buildContext.ExportedTypes = getTypes();
+                }
+                else
+                {
+                    TypeFilters typeFilters = new()
+                    {
+                        IsPublic = false,
+                        FullNameExcludes = new[] { "<*" }
+                    };
+
+                    _buildContext.ExportedTypes = _buildContext
+                        .Assemblies
+                        .GetTypes(typeFilters)
+                        .ToArray();
+                }
 
                 _buildContext.Logger.LogDebug($"Loaded {_buildContext.Assemblies.Length} assemblies");
 

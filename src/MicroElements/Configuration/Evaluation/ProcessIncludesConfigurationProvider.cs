@@ -78,7 +78,10 @@ namespace MicroElements.Configuration.Evaluation
         }
 
         private ProviderHandler BuildHandler(IConfigurationProvider childProvider)
-            => new(childProvider, ChangeToken.OnChange(() => childProvider.GetReloadToken(), () => RebuildData()));
+        {
+            IDisposable reloadHandler = ChangeToken.OnChange(() => childProvider.GetReloadToken(), () => RebuildData());
+            return new(childProvider, reloadHandler);
+        }
 
         private IConfigurationProvider LoadIncludedConfiguration(string includePath)
         {
