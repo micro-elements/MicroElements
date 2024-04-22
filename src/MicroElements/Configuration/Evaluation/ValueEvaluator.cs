@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using MicroElements.Abstractions;
 using MicroElements.Bootstrap.Extensions;
 using MicroElements.DependencyInjection;
@@ -39,7 +40,11 @@ namespace MicroElements.Configuration.Evaluation
 
             if (statelessEvaluators)
             {
-                evaluatorTypes = evaluatorTypes.Where(type => type.GetConstructor(Type.EmptyTypes) != null);
+                evaluatorTypes = evaluatorTypes.Where(type => type.GetConstructors().Any(info => info.IsPublic && info.GetParameters().Length == 0));
+            }
+            else
+            {
+                evaluatorTypes = evaluatorTypes.Where(type => type.GetConstructors().Any(info => info.IsPublic));
             }
 
             foreach (Type evaluatorType in evaluatorTypes)

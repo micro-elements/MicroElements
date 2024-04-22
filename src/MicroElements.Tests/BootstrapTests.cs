@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using FluentAssertions;
 using MicroElements.Bootstrap;
@@ -356,9 +357,9 @@ namespace MicroElements.Tests
                 _propertyValues = new Dictionary<string, string>();
             }
 
-            public DictionaryEvaluator(string name, IDictionary<string, string> propertyValues)
+            public DictionaryEvaluator(string name, IDictionary<string, string> propertyValues, bool canEvaluateExpressions = false)
             {
-                Info = new EvaluatorInfo(name);
+                Info = new EvaluatorInfo(name) { IsUnevaluatedExpressionsAllowed = canEvaluateExpressions };
                 _propertyValues = propertyValues;
             }
 
@@ -369,6 +370,11 @@ namespace MicroElements.Tests
             public EvaluationResult Evaluate(EvaluationContext context)
             {
                 _propertyValues.TryGetValue(context.Expression, out string value);
+                if (value is null)
+                {
+                    string wrapped = UnwrapEvaluator.Wrap(context.Expression);
+                    return EvaluationResult.Create(context, wrapped);
+                }
                 return EvaluationResult.Create(context, value);
             }
         }
@@ -398,6 +404,36 @@ namespace MicroElements.Tests
             SimpleExpressionParser
                 .ParseAndRender(default, "${eval1:${eval2:${eval1:Prop1}_${eval1:Prop2}}}", evaluators)
                 .Should().Be("Success!");
+        }
+
+        [Test]
+        public void placeholders_with_recursion2()
+        {
+            IValueEvaluator[] evaluators =
+            {
+                new DictionaryEvaluator("eval1", new Dictionary<string, string> { { "Value2_Value3", "Success" } }),
+                new DictionaryEvaluator("eval2", new Dictionary<string, string> { { "Prop2", "Value2"} }),
+                new DictionaryEvaluator("eval3", new Dictionary<string, string> { { "Prop3", "Value3"} }),
+            };
+
+            SimpleExpressionParser
+                .ParseAndRender(default, "${eval1:${eval2:Prop2}_${eval3:Prop3}}", evaluators)
+                .Should().Be("Success");
+        }
+
+        [Test]
+        public void placeholders_with_recursion3()
+        {
+            IValueEvaluator[] evaluators =
+            {
+                new DictionaryEvaluator("eval1", new Dictionary<string, string> { { "Value2_Value3", "Success" } }, canEvaluateExpressions: true),
+                new DictionaryEvaluator("eval2", new Dictionary<string, string> { { "Prop2", "Value2"} }),
+                new DictionaryEvaluator("eval3", new Dictionary<string, string> { { "Prop3", "Value3"} }),
+            };
+
+            SimpleExpressionParser
+                .ParseAndRender(default, "${eval1:${eval2:Prop2}_${eval3:Prop3}}", evaluators)
+                .Should().Be("${eval2:Prop2}_${eval3:Prop3}");
         }
 
         [Test]

@@ -77,7 +77,7 @@ namespace MicroElements.Bootstrap
                         LoadFromDomain = true,
                         LoadFromDirectory = _buildContext.StartupInfo.BaseDirectory,
                         SearchPatterns = _buildContext.StartupConfiguration.AssemblyScanPatterns,
-                        IncludePatterns = _buildContext.StartupConfiguration.AssemblyScanPatterns
+                        IncludePatterns = null
                     };
 
                     _buildContext.Assemblies = assemblySource
@@ -93,7 +93,7 @@ namespace MicroElements.Bootstrap
                 {
                     TypeFilters typeFilters = new()
                     {
-                        IsPublic = false,
+                        IsPublic = true,
                         FullNameExcludes = new[] { "<*" }
                     };
 

@@ -7,7 +7,6 @@ using System.Linq;
 using MicroElements.Abstractions;
 using MicroElements.Bootstrap;
 using MicroElements.Collections.Cache;
-using MicroElements.Collections.TwoLayerCache;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -67,14 +66,19 @@ namespace MicroElements.Configuration.Evaluation
         }
 
         /// <inheritdoc />
-        public override bool TryGet(string key, out string value)
+        public override bool TryGet(string key, out string? value)
         {
             string originalValue = _configurationRoot.GetValue<string>(key);
 
             if (string.IsNullOrEmpty(originalValue) || !originalValue.HasPlaceholderFor(_evaluators))
+            {
                 value = null;
+            }
             else
-                value = SimpleExpressionParser.TryParseAndRender(key, originalValue, _configurationRoot, _evaluators).EvaluatedExpression;
+            {
+                EvaluationResult evaluationResult = SimpleExpressionParser.TryParseAndRender(key, originalValue, _configurationRoot, _evaluators);
+                value = evaluationResult.EvaluatedExpression;
+            }
 
             return value != null;
         }
@@ -93,6 +97,9 @@ namespace MicroElements.Configuration.Evaluation
     {
         public static bool HasPlaceholderFor(this string value, IReadOnlyCollection<IValueEvaluator> evaluators)
             => value.Contains("$") && evaluators.Any(evaluator => value.Contains(evaluator.PlaceholderTag()));
+
+        public static bool HasPlaceholderFor(this string value, IValueEvaluator evaluator)
+            => value.Contains("$") && value.Contains(evaluator.PlaceholderTag());
 
         public static EvaluationResult TryParseAndRender(
             string key,
@@ -113,12 +120,12 @@ namespace MicroElements.Configuration.Evaluation
                     {
                         var placeholderTag = evaluator.PlaceholderTag();
 
-                        int startIndex = 0;
-                        int tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, startIndex, StringComparison.InvariantCultureIgnoreCase);
+                        int tagStartIndex = 0;
+                        int tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, tagStartIndex, StringComparison.InvariantCultureIgnoreCase);
 
                         while (tagIndex >= 0)
                         {
-                            placeholderValueEndIndex = valueWithPlaceholder.IndexOf('}', tagIndex);
+                            placeholderValueEndIndex = FindRightBracketIndex(valueWithPlaceholder, tagIndex + placeholderTag.Length);
 
                             if (placeholderValueEndIndex > 0)
                             {
@@ -126,17 +133,17 @@ namespace MicroElements.Configuration.Evaluation
                                 string expressionValue = valueWithPlaceholder.Substring(placeholderValueStartIndex, placeholderValueEndIndex - placeholderValueStartIndex);
 
                                 bool hasInnerExpressions = expressionValue.HasPlaceholderFor(evaluators);
-                                if (hasInnerExpressions)
+                                if (!evaluator.Info.IsUnevaluatedExpressionsAllowed && hasInnerExpressions)
                                 {
                                     // will try to find next token with the same tag
-                                    startIndex = startIndex + 1;
-                                    tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, startIndex, StringComparison.InvariantCultureIgnoreCase);
+                                    tagStartIndex += 1;
+                                    tagIndex = valueWithPlaceholder.IndexOf(placeholderTag, tagStartIndex, StringComparison.InvariantCultureIgnoreCase);
                                 }
                                 else
                                 {
                                     // Expression does not have other expressions.
                                     // Evaluate expression.
-                                    var context = new EvaluationContext(configuration, evaluators, key, expressionValue);
+                                    var context = new EvaluationContext(configuration, evaluators, key, expressionValue, valueWithPlaceholder);
                                     EvaluationResult evaluationResult = evaluator.Evaluate(context);
                                     string evaluatedValue = evaluationResult.EvaluatedExpression ?? string.Empty;
 
@@ -166,10 +173,36 @@ namespace MicroElements.Configuration.Evaluation
                     }
                 }
 
+                if (valueWithPlaceholder.HasPlaceholderFor(UnwrapEvaluator.Instance))
+                {
+                    EvaluationResult evaluationResult = TryParseAndRender(key, valueWithPlaceholder, configuration, UnwrapEvaluator.AsCollection);
+                    return evaluationResult;
+                }
+
                 return new EvaluationResult(key, valueWithExpression, evaluatedExpression: valueWithPlaceholder);
             }
 
             return new EvaluationResult(key, valueWithExpression, null);
+        }
+
+        private static int FindRightBracketIndex(string valueWithPlaceholder, int startIndex)
+        {
+            int skip = 0;
+            int result = -1;
+            for (int i = startIndex; i < valueWithPlaceholder.Length; i++)
+            {
+                char c = valueWithPlaceholder[i];
+                if (c == '}' && skip-- == 0)
+                {
+                    result = i;
+                    return result;
+                }
+
+                if (c == '{')
+                    skip++;
+            }
+
+            return result;
         }
 
         public static string PlaceholderTag(this IValueEvaluator evaluator) => Cache
@@ -177,6 +210,9 @@ namespace MicroElements.Configuration.Evaluation
                 .GetOrAdd(evaluator, ev => $"${{{ev.Info.Name}:");
 
         public static string? ParseAndRender(string key, string valueWithPlaceholderOriginal, IReadOnlyCollection<IValueEvaluator>? evaluators)
-            => TryParseAndRender(key, valueWithPlaceholderOriginal, null, evaluators).EvaluatedExpression;
+        {
+            EvaluationResult tryParseAndRender = TryParseAndRender(key, valueWithPlaceholderOriginal, null, evaluators);
+            return tryParseAndRender.EvaluatedExpression;
+        }
     }
 }

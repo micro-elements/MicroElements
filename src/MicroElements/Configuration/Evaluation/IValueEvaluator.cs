@@ -41,6 +41,11 @@ namespace MicroElements.Configuration.Evaluation
         public int Order { get; }
 
         /// <summary>
+        /// This evaluator can accept not evaluated expressions.
+        /// </summary>
+        public bool IsUnevaluatedExpressionsAllowed { get; init; } = false;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="EvaluatorInfo"/> class.
         /// </summary>
         /// <param name="name">The name of evaluator.</param>
@@ -139,18 +144,29 @@ namespace MicroElements.Configuration.Evaluation
         public string Expression { get; }
 
         /// <summary>
+        /// Outer Expression.
+        /// </summary>
+        public string OuterExpression { get; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="EvaluationContext"/> class.
         /// </summary>
         /// <param name="configuration">Configuration to use.</param>
         /// <param name="evaluators">Evaluators.</param>
         /// <param name="key">Key to evaluate.</param>
         /// <param name="expression">Expression to evaluate.</param>
-        public EvaluationContext(IConfiguration configuration, IReadOnlyCollection<IValueEvaluator> evaluators, string key, string expression)
+        public EvaluationContext(
+            IConfiguration configuration,
+            IReadOnlyCollection<IValueEvaluator> evaluators,
+            string key,
+            string expression,
+            string outerExpression)
         {
             Configuration = configuration;
             Evaluators = evaluators;
             Key = key;
             Expression = expression;
+            OuterExpression = outerExpression;
         }
     }
 }
